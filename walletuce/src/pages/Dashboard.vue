@@ -2,48 +2,64 @@
   <v-app>
     <v-container fluid class="pa-0 main-bg">
       <!-- Barra superior -->
-      <v-app-bar color="deep-purple accent-4" dark flat>
-        <v-avatar class="avatar-espaciado mr-3" color="white">
-          <v-icon color="deep-purple accent-4">mdi-account</v-icon>
+      <v-app-bar color="green-lighten-1 accent-4" dark flat>
+        <v-avatar class="avatar-espaciado mr-3" ><!-- 
+          <v-icon color="green-lighten-1 accent-4">mdi-account</v-icon> -->
+          <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40"></v-img>
         </v-avatar>
         <v-toolbar-title><span class="font-weight-bold"><h2>Bienvenido, Matias</h2></span></v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon>
           <v-icon>mdi-cog</v-icon>
         </v-btn>
-        <v-btn class="ayuda-btn ml-2" elevation="0" @click="onAyudaClick">
-          <v-icon left size="20" color="#673AB7">mdi-help-circle</v-icon>
-          <span class="ayuda-text">Ayuda</span>
+        <v-btn class="ayuda-btn ml-2" color="green-lighten-1" elevation="0" @click="onAyudaClick">
+          <v-icon left size="20" color="green-lighten-1">mdi-help-circle</v-icon>
+          <span class="ayuda-text" color="green-lighten-1">Ayuda</span>
         </v-btn>
       </v-app-bar>
 
       <!-- Contenido principal -->
       <v-container class="d-flex flex-column align-center justify-center main-content">
-          <div class="dashboard-card">
+          <v-container class="dashboard-upper-card bg-grey-lighten-2">
             <!-- Tarjeta de monto -->
-            <div class="monto-card dashboard-balance mb-6">
-                <div class="text-h6 font-weight-bold ">Monto</div>
-                <div class="text-h6 font-weight-bold">$205.376,82</div>
-            </div>
+            <v-container class="monto-card dashboard-balance mb-6 bg-green-lighten-1">
+              <v-container class="text-h6 font-weight-bold text-grey-lighten-4 pa-0">Monto</v-container>
+              <v-container class="text-h6 font-weight-bold text-grey-lighten-4 pa-0">$205.376,82</v-container>
+            </v-container>
             <!-- Tarjeta de movimientos -->
-            <div
-              class="movimientos-link d-flex align-center"
+            <v-container
+              class="movimientos-link d-flex align-center pa-0"
               @click="onMovimientosClick"
               style="cursor:pointer;"
             >
-              <span class="movimientos-text">Ver Movimientos</span>
-              <v-icon size="20" color="#484554">mdi-chevron-right</v-icon>
-            </div>
-        </div>
+              <v-hover>
+                <template v-slot:default="{ isHovering, props }">
+                  <span
+                    v-bind="props"
+                    :class="isHovering ? 'text-green-lighten-1' : 'text-grey-darken-3'"
+                    class="font-weight-bold"
+                  >Ver Movimientos</span>
+                  <v-icon size="20" v-bind="props" :class="isHovering ? 'text-green-lighten-1' : 'text-grey-darken-3'">mdi-chevron-right</v-icon>
+                </template>
+              </v-hover>
+            </v-container>
+        </v-container>
         <!-- Acciones -->
+        <v-container class="dashboard-lower-card d-flex flex-column align-center justify-center main-content">
         <v-row class="justify-center mt-2" style="width:100%;">
           <v-col cols="auto" class="text-center" v-for="(action, i) in actions" :key="i">
-            <div class="action-btn mb-2 d-flex align-center justify-center mx-auto">
+            <v-btn 
+              class="action-btn mb-2 d-flex align-center justify-center mx-auto bg-grey-lighten-2"
+              min-width="64"
+              min-height="64"
+              style="border-radius: 50% !important; aspect-ratio: 1;"
+            >
               <v-icon :color="action.color" size="32">{{ action.icon }}</v-icon>
-            </div>
-            <div>{{ action.label1 }}<br>{{ action.label2 }}</div>
+            </v-btn>
+            <v-container class="text-grey-darken-3 font-weight-bold">{{ action.label1 }}<br>{{ action.label2 }}</v-container>
           </v-col>
         </v-row>
+        </v-container>
       </v-container>
     </v-container>
   </v-app>
@@ -51,11 +67,11 @@
 
 <script setup lang="ts">
 const actions = [
-  { icon: 'mdi-arrow-right-bold', color: 'deep-purple accent-4', label1: 'Ingresar', label2: 'Dinero' },
-  { icon: 'mdi-swap-horizontal', color: 'deep-purple accent-4', label1: 'Transferir', label2: 'Dinero' },
-  { icon: 'mdi-arrow-down-bold', color: 'deep-purple accent-4', label1: 'Generar', label2: 'Cobro' },
-  { icon: 'mdi-arrow-up-bold', color: 'deep-purple accent-4', label1: 'Realizar', label2: 'Pago' },
-  { icon: 'mdi-wallet', color: 'deep-purple accent-4', label1: 'Administrar', label2: 'tarjetas' },
+  { icon: 'mdi-arrow-right-bold', color: 'green-lighten-1', label1: 'Ingresar', label2: 'Dinero' },
+  { icon: 'mdi-swap-horizontal', color: 'green-lighten-1', label1: 'Transferir', label2: 'Dinero' },
+  { icon: 'mdi-arrow-down-bold', color: 'green-lighten-1', label1: 'Generar', label2: 'Cobro' },
+  { icon: 'mdi-arrow-up-bold', color: 'green-lighten-1', label1: 'Realizar', label2: 'Pago' },
+  { icon: 'mdi-wallet', color: 'green-lighten-1', label1: 'Administrar', label2: 'tarjetas' },
 ]
 
 function onMovimientosClick() {
@@ -82,7 +98,19 @@ function onAyudaClick() {
   align-items: center;
   padding: 24px 0;
 }
-.dashboard-card {
+.dashboard-upper-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  width: 100%;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.dashboard-lower-card {
   background: #ddd;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.18);
@@ -90,25 +118,24 @@ function onAyudaClick() {
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 100px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  max-height: fit-content;
 }
 .monto-card {
   justify-content: center;
   align-items: center;
   margin-top: 30px;
-  background: #673AB7;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   width: 90%;
   max-width: 700px;
 }
 .dashboard-balance {
-  padding: 10px 10px 10px 10px;
+  padding: 16px;
   margin-bottom: 32px;
-  color: #fff;
   text-align: left;
 }
 .dashboard-movements {
@@ -118,14 +145,16 @@ function onAyudaClick() {
   text-align: left;
 }
 .action-btn {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: #e0e0e0;
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  min-height: 64px !important;
+  border-radius: 50% !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  padding: 0 !important;
+  aspect-ratio: 1;
 }
 .v-btn.w-100 {
   width: 100%;
@@ -144,9 +173,7 @@ function onAyudaClick() {
   transition: color 0.2s;
   margin-left: 24px;
   justify-content: flex-start;
-}
-.movimientos-link:hover {
-  color: #673AB7 !important;
+  margin-bottom: 10px;
 }
 .movimientos-text {
   font-weight: bold;
@@ -154,7 +181,6 @@ function onAyudaClick() {
 }
 .ayuda-btn {
   background: #f3eafe !important;
-  color: #673AB7 !important;
   border-radius: 10px !important;
   font-weight: bold;
   font-size: 1.15rem;
@@ -173,7 +199,6 @@ function onAyudaClick() {
 .ayuda-text {
   font-weight: bold;
   margin-left: 2px;
-  color: #673AB7 !important;
   font-size: 1.1rem;
 }
 .ayuda-btn .v-icon {
@@ -182,7 +207,6 @@ function onAyudaClick() {
   margin-left: 0;
   margin-top: 12px;
   margin-bottom: 12px;
-  color: #673AB7 !important;
   vertical-align: middle;
 }
 .avatar-espaciado {
