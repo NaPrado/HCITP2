@@ -23,7 +23,7 @@
           <v-container class="dashboard-upper-card bg-grey-lighten-2">
             <!-- Tarjeta de monto -->
             <v-container class="monto-card dashboard-balance mb-6 bg-green-lighten-1">
-              <v-container class="text-h6 font-weight-bold text-grey-lighten-4 pa-0">Monto</v-container>
+              <v-container class="text-h4 font-weight-bold text-grey-lighten-4 pa-0">Monto</v-container>
               <v-container class="text-h6 font-weight-bold text-grey-lighten-4 pa-0">$205.376,82</v-container>
             </v-container>
             <!-- Tarjeta de movimientos -->
@@ -130,7 +130,7 @@ function onAyudaClick() {
   margin-top: 30px;
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-  width: 90%;
+  width: 95%;
   max-width: 700px;
 }
 .dashboard-balance {
