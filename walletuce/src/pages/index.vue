@@ -1,7 +1,7 @@
 <template>
-  <Dashboard/>
+  <HomePage/>
 </template>
 
 <script lang="ts" setup>
-import Dashboard from './Dashboard.vue'
+import HomePage from './HomePage.vue'
 </script>

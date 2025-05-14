@@ -2,14 +2,14 @@
   <v-app>
     <v-container fluid class="pa-0 main-bg">
       <!-- Barra superior -->
-      <v-app-bar color="green-lighten-1 accent-4" dark flat>
+      <v-app-bar color="green-lighten-1 accent-4" dark flat class="custom-app-bar">
         <v-avatar class="avatar-espaciado mr-3" ><!-- 
           <v-icon color="green-lighten-1 accent-4">mdi-account</v-icon> -->
           <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40"></v-img>
         </v-avatar>
-        <v-toolbar-title><span class="font-weight-bold"><h2>Bienvenido, Matias</h2></span></v-toolbar-title>
+        <v-toolbar-title class="text-h4 font-weight-bold">Bienvenido, Matias</v-toolbar-title>
         <v-spacer></v-spacer>
-        <v-btn icon>
+        <v-btn icon @click="onConfigurationClick">
           <v-icon>mdi-cog</v-icon>
         </v-btn>
         <v-btn class="ayuda-btn ml-2" color="green-lighten-1" elevation="0" @click="onAyudaClick">
@@ -53,6 +53,7 @@
               min-width="64"
               min-height="64"
               style="border-radius: 50% !important; aspect-ratio: 1;"
+              @click="handleActionClick(action.action)"
             >
               <v-icon :color="action.color" size="32">{{ action.icon }}</v-icon>
             </v-btn>
@@ -66,22 +67,51 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 const actions = [
-  { icon: 'mdi-arrow-right-bold', color: 'green-lighten-1', label1: 'Ingresar', label2: 'Dinero' },
-  { icon: 'mdi-swap-horizontal', color: 'green-lighten-1', label1: 'Transferir', label2: 'Dinero' },
-  { icon: 'mdi-arrow-down-bold', color: 'green-lighten-1', label1: 'Generar', label2: 'Cobro' },
-  { icon: 'mdi-arrow-up-bold', color: 'green-lighten-1', label1: 'Realizar', label2: 'Pago' },
-  { icon: 'mdi-wallet', color: 'green-lighten-1', label1: 'Administrar', label2: 'tarjetas' },
+  { icon: 'mdi-arrow-right-bold', color: 'green-lighten-1', label1: 'Ingresar', label2: 'Dinero', action: 'ingresar' },
+  { icon: 'mdi-swap-horizontal', color: 'green-lighten-1', label1: 'Transferir', label2: 'Dinero', action: 'transferir' },
+  { icon: 'mdi-arrow-down-bold', color: 'green-lighten-1', label1: 'Generar', label2: 'Cobro', action: 'generarCobro' },
+  { icon: 'mdi-arrow-up-bold', color: 'green-lighten-1', label1: 'Realizar', label2: 'Pago', action: 'realizarPago' },
+  { icon: 'mdi-wallet', color: 'green-lighten-1', label1: 'Administrar', label2: 'tarjetas', action: 'administrarTarjetas' },
 ]
 
+function handleActionClick(action: string) {
+  switch(action) {
+    case 'ingresar':
+      router.push("./DepositPage")
+      break;
+    case 'transferir':
+      router.push("./TransferPage")
+      break;
+    case 'generarCobro':
+      router.push("./GeneratePaymentPage")
+      break;
+    case 'realizarPago':
+      router.push("./MakePaymentPage")
+      break;
+    case 'administrarTarjetas':
+      router.push("./AdminCardsPage")
+      break;
+    default:
+      console.warn("Acción no reconocida:", action);
+  }
+}
+
 function onMovimientosClick() {
-  // Aquí puedes poner la navegación o acción deseada
-  // Por ejemplo: router.push('/movimientos')
+  router.push('/movements')
 }
 
 function onAyudaClick() {
-  // Acción de ayuda
+  router.push('/help')
 }
+function onConfigurationClick(){
+  //ver que hacemos aca
+}
+
 </script>
 
 <style scoped>
@@ -96,7 +126,7 @@ function onAyudaClick() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px 0;
+  padding: 24px;
 }
 .dashboard-upper-card {
   border-radius: 16px;
@@ -211,6 +241,16 @@ function onAyudaClick() {
 }
 .avatar-espaciado {
   margin-left: 16px;
+}
+.custom-app-bar {
+  min-height: 72px !important; /* ajusta según necesidad */
+}
+.custom-app-bar .v-toolbar-title {
+  line-height: 1.2;
+}
+.v-toolbar-title {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }
 </style>
 
