@@ -3,8 +3,7 @@
     <v-container fluid class="pa-0 main-bg">
       <!-- Barra superior -->
       <v-app-bar color="green-lighten-1 accent-4" dark flat class="custom-app-bar">
-        <v-avatar class="avatar-espaciado mr-3" ><!-- 
-          <v-icon color="green-lighten-1 accent-4">mdi-account</v-icon> -->
+        <v-avatar class="avatar-espaciado mr-3" >
           <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40"></v-img>
         </v-avatar>
         <v-toolbar-title class="text-h4 font-weight-bold">Bienvenido, Matias</v-toolbar-title>
@@ -12,7 +11,7 @@
         <v-btn icon @click="onConfigurationClick">
           <v-icon>mdi-cog</v-icon>
         </v-btn>
-        <v-btn class="ayuda-btn ml-2" color="green-lighten-1" elevation="0" @click="onAyudaClick">
+        <v-btn class="ayuda-btn ml-2" color="green-lighten-1" @click="onAyudaClick">
           <v-icon left size="20" color="green-lighten-1">mdi-help-circle</v-icon>
           <span class="ayuda-text" color="green-lighten-1">Ayuda</span>
         </v-btn>
@@ -130,7 +129,7 @@ function onConfigurationClick(){
 }
 .dashboard-upper-card {
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
   width: 100%;
   max-width: 700px;
   margin-left: auto;
@@ -143,7 +142,7 @@ function onConfigurationClick(){
 .dashboard-lower-card {
   background: #ddd;
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
   width: 100%;
   max-width: 700px;
   margin-left: auto;
@@ -159,7 +158,7 @@ function onConfigurationClick(){
   align-items: center;
   margin-top: 30px;
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
   width: 95%;
   max-width: 700px;
 }
@@ -185,6 +184,7 @@ function onConfigurationClick(){
   justify-content: center;
   padding: 0 !important;
   aspect-ratio: 1;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.14) !important;
 }
 .v-btn.w-100 {
   width: 100%;
@@ -215,7 +215,7 @@ function onConfigurationClick(){
   font-weight: bold;
   font-size: 1.15rem;
   padding: 4px 18px 4px 10px;
-  box-shadow: none !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
   display: flex;
   align-items: center;
   min-height: 40px;
