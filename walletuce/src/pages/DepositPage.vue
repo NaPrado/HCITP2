@@ -39,11 +39,11 @@
   
             <!-- Botones -->
             <v-row class="mt-4 mb-1 mr-1" justify="space-between" align="center">
-              <v-btn variant="text" color="black">
+              <v-btn variant="text" color="black" @click="onVolverClick">
                 <v-icon start>mdi-chevron-left</v-icon>
                 Volver a Hogar
               </v-btn>
-              <v-btn color="green-lighten-1" class="text-white font-weight-bold" rounded>
+              <v-btn color="green-lighten-1" class="text-white font-weight-bold" rounded @click="onCrearClick">
                 Crear Importe
               </v-btn>
             </v-row>
@@ -54,8 +54,17 @@
     </v-app>
   </template>
   
-  <script setup lang="ts">
-  //import { onAyudaClick, onConfigurationClick } from "./HomePage"
+<script setup lang="ts">
+  import { useRouter } from 'vue-router'
+
+  const router = useRouter()
+
+  function onVolverClick(){
+    router.push("./HomePage");
+  }
+  function onCrearClick(){
+    router.push("./ConfirmDeposit");
+  }
   </script>
   
   <style scoped>
