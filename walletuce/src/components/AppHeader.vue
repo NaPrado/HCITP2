@@ -6,25 +6,26 @@
     dark
     class="custom-app-bar"
   >
-    <v-container
-      class="d-flex align-center justify-space-between fill-height pa-0"
-    >
-      <!-- Logo + Título -->
-      <div class="d-flex align-center">
+    <v-container class="d-flex align-center justify-space-between fill-height pa-0">
+      <!-- Logo + Título con hover -->
+      <div
+        class="d-flex align-center text-decoration-none link-wrapper px-2"
+        @mouseenter="hovering = true"
+        @mouseleave="hovering = false"
+      >
         <RouterLink to="/" class="d-flex align-center text-decoration-none">
           <v-avatar class="mr-3" size="40">
-            <v-img
-              src="/src/assets/letucce.svg"
-              alt="Logo"
-              width="40"
-              height="40"
-              cover
-            />
+            <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40" cover />
           </v-avatar>
+          <transition name="fade-slide-up" mode="out-in">
+            <v-toolbar-title
+              :key="hovering ? 'walletuce' : 'titulo'"
+              class="text-white font-weight-bold text-h5 fixed-title-width"
+            >
+              {{ hovering ? 'Walletuce' : titulo }}
+            </v-toolbar-title>
+          </transition>
         </RouterLink>
-        <v-toolbar-title class="text-white font-weight-bold text-h5">
-          {{ titulo }}
-        </v-toolbar-title>
       </div>
 
       <!-- Acciones -->
@@ -42,7 +43,11 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ titulo: string }>();
+import { ref } from 'vue'
+
+defineProps<{ titulo: string }>()
+
+const hovering = ref(false)
 
 function onConfigurationClick() {
   // lógica de configuración general
@@ -58,10 +63,25 @@ function onAyudaClick() {
   min-height: 72px;
 }
 
+/* Nueva animación sin position absolute */
+.fade-slide-up-enter-active,
+.fade-slide-up-leave-active {
+  transition: all 0.35s ease;
+}
+
+.fade-slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.fade-slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
 .ayuda-btn {
   background-color: #ffffff !important;
-  color: #2e7d32 !important; /* Verde accesible y elegante */
-  border-radius: 9999px; /* Totalmente redondo */
+  color: #2e7d32 !important;
+  border-radius: 9999px;
   font-weight: 600;
   font-size: 0.95rem;
   padding: 6px 20px 6px 12px;
@@ -69,23 +89,35 @@ function onAyudaClick() {
   align-items: center;
   height: 42px;
   transition: all 0.2s ease;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
   text-transform: none;
   letter-spacing: 0.25px;
+  border: 1px solid #c8e6c9;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .ayuda-btn:hover {
-  background-color: #e8f5e9 !important; /* Verde muy claro */
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  background-color: #e8f5e9 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
 }
+
 
 .ayuda-text {
   margin-left: 6px;
   font-weight: 600;
   font-size: 1rem;
 }
+
 .text-decoration-none {
   text-decoration: none;
 }
+
+.link-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.fixed-title-width {
+  min-width: 200px; /* Ajustá según el largo del titulo original */
+}
+
 </style>
