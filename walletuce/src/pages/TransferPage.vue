@@ -130,9 +130,9 @@ const form = ref({
 const destinatarioSeleccionado = ref(false);
 
 const destinatariosRecientes = ref([
-  { nombre: "Juan Perez", alias: "juanp123" },
-  { nombre: "María García", alias: "mgarcia99" },
-  { nombre: "Pedro López", alias: "pedro.lpz" },
+  { nombre: "Juan Perez", alias: "jp4321" },
+  { nombre: "Roman Palermo", alias: "roman3324" },
+  { nombre: "Ivonne Samantha Kim", alias: "ivo1234" },
 ]);
 
 const destinatariosFiltrados = computed(() => {
@@ -218,10 +218,10 @@ function onSubmit() {
   transition: background-color 0.2s ease;
   border-radius: 50%;
   padding: 8px;
-  background-color: #e0f2f1; /* Verde suave */
+  background-color: #f1f1f1; /* Gris muy claro, casi blanco */
 }
 
 .edit-btn:hover {
-  background-color: #b2dfdb; /* Un poco más oscuro al pasar el mouse */
+  background-color: #e0e0e0; /* Un poquito más oscuro para hover */
 }
 </style>
