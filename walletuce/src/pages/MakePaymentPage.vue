@@ -2,20 +2,7 @@
     <v-app>
       <v-container fluid class="pa-0 main-bg">
         <!-- Barra superior -->
-        <v-app-bar color="green-lighten-1 accent-4" dark flat class="custom-app-bar">
-          <v-avatar class="avatar-espaciado mr-3">
-            <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40"></v-img>
-          </v-avatar>
-          <v-toolbar-title class="text-h4 font-weight-bold">Realizar Pago</v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-btn icon @click="onConfigurationClick">
-            <v-icon>mdi-cog</v-icon>
-          </v-btn>
-          <v-btn class="ayuda-btn ml-2" color="green-lighten-1" @click="onAyudaClick">
-            <v-icon left size="20" color="green-lighten-1">mdi-help-circle</v-icon>
-            <span class="ayuda-text">Ayuda</span>
-          </v-btn>
-        </v-app-bar>
+        <AppHeader titulo="Realizar Pago" />
   
         <!-- Contenido principal -->
         <v-container class="d-flex flex-column align-center justify-center main-content pt-10">
@@ -28,7 +15,7 @@
             <!-- Monto -->
             <v-card class="pa-4 mb-4 card-with-shadow" color="green-lighten-1" rounded="lg">
               <v-card-title class="text-white font-weight-bold"><h2>Introducir identificador de pago</h2></v-card-title>
-              <v-text-field hide-details class="ml-2 mr-2 bg-grey-lighten-4"></v-text-field>
+              <v-text-field placeholder="ID de pago" v-model="identificador" hide-details class="ml-2 mr-2 bg-grey-lighten-4"></v-text-field>
             </v-card>
   
             <!-- Selección de origen -->
@@ -36,8 +23,18 @@
               <v-card-title class="text-grey-darken-3 font-weight-bold text-subtitle-1">
                 Seleccione el metodo de pago.
               </v-card-title>
-              <v-checkbox label="Saldo" color="green-lighten-1" class="ml-2" hide-details></v-checkbox>
-              <v-checkbox label="Tarjeta" color="green-lighten-1" class="ml-2" :model-value="true" hide-details></v-checkbox>
+              <v-radio-group v-model="origen" class="ml-2">
+              <v-radio
+                label="Saldo"
+                value="saldo"
+                color="green-lighten-1"
+              />
+              <v-radio
+                label="Tarjeta"
+                value="tarjeta"
+                color="green-lighten-1"
+              />
+            </v-radio-group>
             </v-card>
   
             <!-- Botones -->
@@ -59,9 +56,14 @@
   
   <script setup lang="ts">
   import { useRouter } from 'vue-router'
+  import { ref } from 'vue';
   
   const router = useRouter()
   
+  
+const monto = ref("");
+const origen = ref("tarjeta");
+
   function onVolverClick() {
     router.push('./HomePage')
   }

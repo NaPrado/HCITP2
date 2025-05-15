@@ -2,20 +2,7 @@
     <v-app>
       <v-container fluid class="pa-0 main-bg">
         <!-- Barra superior -->
-        <v-app-bar color="green-lighten-1 accent-4" dark flat class="custom-app-bar">
-          <v-avatar class="avatar-espaciado mr-3">
-            <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40"></v-img>
-          </v-avatar>
-          <v-toolbar-title class="text-h4 font-weight-bold">Generar Cobro</v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-btn icon @click="onConfigurationClick">
-            <v-icon>mdi-cog</v-icon>
-          </v-btn>
-          <v-btn class="ayuda-btn ml-2" color="green-lighten-1" @click="onAyudaClick">
-            <v-icon left size="20" color="green-lighten-1">mdi-help-circle</v-icon>
-            <span class="ayuda-text">Ayuda</span>
-          </v-btn>
-        </v-app-bar>
+        <AppHeader titulo="Generar Cobro" />
   
         <!-- Contenido principal -->
         <v-container class="d-flex flex-column align-center justify-center main-content pt-10">
@@ -29,12 +16,12 @@
             <div class="card-container">
               <v-card class="pa-4 mb-4 card-with-shadow equal-width-card" color="green-lighten-1" rounded="lg">
                 <v-card-title class="text-white font-weight-bold"><h2>Monto a cobrar</h2></v-card-title>
-                <v-text-field hide-details class="ml-2 mr-2 bg-grey-lighten-4"></v-text-field>
+                <v-text-field placeholder="Ingrese un monto" v-model="monto" type="number" hide-details class="ml-2 mr-2 bg-grey-lighten-4"></v-text-field>
               </v-card>
               
               <v-card class="pa-4 mb-4 card-with-shadow equal-width-card" color="green-lighten-1" rounded="lg">
                 <v-card-title class="text-white font-weight-bold"><h2>Titulo</h2></v-card-title>
-                <v-text-field hide-details class="ml-2 mr-2 bg-grey-lighten-4"></v-text-field>
+                <v-text-field placeholder="Ingrese un titulo" v-model="titulo" hide-details class="ml-2 mr-2 bg-grey-lighten-4"></v-text-field>
               </v-card>
             </div>
   
@@ -62,8 +49,12 @@
   
   <script setup lang="ts">
   import { useRouter } from 'vue-router'
+  import { ref } from 'vue';
   
   const router = useRouter()
+
+  const monto = ref();
+  const titulo = ref("");
   
   function onVolverClick() {
     router.push('./HomePage')

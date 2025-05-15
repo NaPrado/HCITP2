@@ -2,20 +2,7 @@
     <v-app>
       <v-container fluid class="pa-0 main-bg">
             <!-- Barra superior -->
-            <v-app-bar color="green-lighten-1 accent-4" dark flat class="custom-app-bar">
-            <v-avatar class="avatar-espaciado mr-3">
-                <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40"></v-img>
-            </v-avatar>
-            <v-toolbar-title class="text-h4 font-weight-bold">Realizar Pago</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-btn icon @click="onConfigurationClick">
-                <v-icon>mdi-cog</v-icon>
-            </v-btn>
-            <v-btn class="ayuda-btn ml-2" color="green-lighten-1" @click="onAyudaClick">
-                <v-icon left size="20" color="green-lighten-1">mdi-help-circle</v-icon>
-                <span class="ayuda-text" color="green-lighten-1">Ayuda</span>
-            </v-btn>
-            </v-app-bar>
+            <AppHeader titulo="Realizar Pago" />
 
             <!-- Botón de atrás -->
 
