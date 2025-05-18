@@ -1,12 +1,12 @@
 <template>
     <v-app>
-      <v-container fluid class="pa-0 main-bg">
+      <v-container fluid class="pa-0 main-bg overflow-y-auto">
         <!-- Barra superior -->
         <AppHeader titulo="Movimientos" />
   
         <!-- Contenido principal -->
         <v-container class="d-flex flex-column align-center justify-center main-content pt-16">
-          <v-btn variant="text" color="black" @click="onVolverClick" class="back-button pl-1">
+          <v-btn variant="text" color="black" @click="onVolverClick" class="back-button pl-1 mt-4">
               <v-icon start>mdi-arrow-left</v-icon>
               Atrás
           </v-btn>
@@ -141,7 +141,7 @@
 }
   .main-bg {
     background: #eee !important;
-    min-height: 100vh;
+    height: 100%;
     display: flex;
     flex-direction: column;
   }
