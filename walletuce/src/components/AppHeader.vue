@@ -117,7 +117,7 @@ function onAyudaClick() {
 }
 
 .fixed-title-width {
-  min-width: 200px; /* Ajustá según el largo del titulo original */
+  min-width: 250px; /* Ajustá según el largo del titulo original */
 }
 
 </style>
