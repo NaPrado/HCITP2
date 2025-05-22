@@ -1,7 +1,7 @@
 <template>
-  <HomePage/>
+  <LandingPage/>
 </template>
 
 <script lang="ts" setup>
-import HomePage from './HomePage.vue'
+import LandingPage from './LandingPage.vue'
 </script>

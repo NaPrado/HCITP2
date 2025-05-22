@@ -15,7 +15,7 @@
           >
             <v-container
               class="text-h4 font-weight-bold text-grey-lighten-4 pa-0"
-              >Monto</v-container
+              >Saldo</v-container
             >
             <v-container
               class="text-h6 font-weight-bold text-grey-lighten-4 pa-0"

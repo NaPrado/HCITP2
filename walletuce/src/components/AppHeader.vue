@@ -87,7 +87,7 @@ function onVerPerfil() {
 function onCerrarSesion() {
   menuVisible.value = false
   // Lógica real de logout aquí
-  console.log('Sesión cerrada')
+  router.push("/LandingPage")
 }
 
 function onAyudaClick() {

@@ -47,7 +47,7 @@ import { ref } from 'vue'
 const router = useRouter()
 
 function onCerrarClick(){
-  router.push("./HomePage");
+  router.push("./LandingPage");
 }
 
 function onTarjetasClick(){
