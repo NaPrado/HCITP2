@@ -8,11 +8,11 @@
         <v-container class="d-flex flex-column align-center justify-center main-content pt-16">
           <v-btn variant="text" color="black" @click="onVolverClick" class="back-button pl-1 mt-4">
               <v-icon start>mdi-arrow-left</v-icon>
-              Atrás
+              Volver
           </v-btn>
           <v-card class="pa-4 container-card bg-grey-lighten-2" rounded="lg">
             <v-container
-                class="monto-card dashboard-balance mb-4 bg-green-lighten-1"
+                class="monto-card dashboard-balance mb-8 bg-green-lighten-1"
             >
                 <v-container
                 class="text-h4 font-weight-bold text-grey-lighten-4 pa-0"
@@ -23,14 +23,6 @@
                 >$205.376,82</v-container
                 >
             </v-container>
-            <v-row class="mt-2 mb-1 mr-1" justify="space-between" align="center">
-                <v-btn variant="text" color="black" @click="onVolverClick">
-                <v-icon start>mdi-chevron-left</v-icon>
-                Volver a Hogar
-                </v-btn>
-            </v-row>
-            <v-divider class="mb-3 mt-2"></v-divider>
-            
 
             <!-- Lista de movimientos scrolleable -->
             <div class="movements-container">
@@ -44,7 +36,7 @@
                   <div class="d-flex justify-space-between align-center">
                     <div>
                       <div class="text-subtitle-1 font-weight-bold text-black">{{ movimiento.nombre }}</div>
-                      <div class="text-body-2 text-grey">{{ movimiento.descripcion }}</div>
+                      <div class="text-body-2 text-black">{{ movimiento.descripcion }}</div>
                     </div>
                     <div class="text-subtitle-1 font-weight-bold" :class="movimiento.monto.startsWith('-') ? 'text-red' : 'text-green'">
                       {{ movimiento.monto }}
@@ -226,7 +218,7 @@
   }
 
   .movimiento-card:hover {
-    background-color:rgb(227, 243, 228) !important;
+    background-color:rgb(237, 237, 237) !important;
   }
 
   .text-red {

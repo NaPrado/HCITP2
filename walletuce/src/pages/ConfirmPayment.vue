@@ -10,7 +10,7 @@
             <v-container class="d-flex flex-column align-center justify-center main-content pt-4">
               <v-btn variant="text" color="black" @click="onVolverClick" class="back-button pl-1">
                 <v-icon start>mdi-arrow-left</v-icon>
-                Atrás
+                Volver
               </v-btn>
                 <v-card class="pa-6 container-card bg-grey-lighten-2" rounded="lg">    
                     <v-card class="pa-4 mb-4 card-with-shadow-medium" color="green-lighten-1" rounded="lg">
@@ -22,12 +22,8 @@
                         <v-card-title class="text-black font-weight-bold pb-0 pt-0"><span><h6>{{ detalle_fuente }}</h6></span></v-card-title>
                     </v-card>
                     <p class="confirmation-text">¿Estás seguro?</p>
-                    <v-row class="mt-4 mb-1 mr-1" justify="space-between" align="center">
-                      <v-btn variant="text" color="black" @click="onVolverHomeClick">
-                        <v-icon start>mdi-chevron-left</v-icon>
-                        Volver a Hogar
-                      </v-btn>
-                        <v-btn color="green-lighten-1" class="text-white font-weight-bold" rounded @click="onCrearClick">
+                    <v-row class="mt-4 mb-1 mr-1" justify="end" align="center">
+                        <v-btn color="green-lighten-1" class="text-white font-weight-bold pl-6 pr-6" rounded @click="onCrearClick">
                             Pagar
                         </v-btn>
                     </v-row>

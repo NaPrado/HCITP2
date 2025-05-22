@@ -8,38 +8,9 @@
         <v-container class="d-flex flex-column align-center justify-center main-content pt-16">
           <v-btn variant="text" color="black" @click="onVolverClick" class="back-button pl-1">
               <v-icon start>mdi-arrow-left</v-icon>
-              Atrás
+              Volver
           </v-btn>
           <v-card class="pa-4 container-card bg-grey-lighten-2" rounded="lg">
-            <v-container
-                class="monto-card dashboard-balance mb-4 bg-green-lighten-1"
-            >
-                <v-container
-                class="text-h4 font-weight-bold text-grey-lighten-4 pa-0"
-                >Monto</v-container
-                >
-                <v-container
-                class="text-h6 font-weight-bold text-grey-lighten-4 pa-0"
-                >$205.376,82</v-container
-                >
-            </v-container>
-            <v-row class="mt-2 mb-1 mr-1" justify="space-between" align="center">
-                <v-btn variant="text" color="black" @click="onVolverClick">
-                  <v-icon start>mdi-chevron-left</v-icon>
-                  Volver a Hogar
-                </v-btn>
-                <v-btn
-                  color="green-lighten-1"
-                  class="text-white font-weight-bold"
-                  rounded
-                  @click="onAñadirTarjetaClick"
-                >
-                  <v-icon start class="mr-1">mdi-plus</v-icon>
-                  Añadir Tarjeta
-                </v-btn>
-            </v-row>
-            <v-divider class="mb-3 mt-2"></v-divider>
-            
 
             <!-- Lista de tarjetas scrolleable -->
             <div class="tarjetas-container">
@@ -48,18 +19,17 @@
                   v-for="(tarjeta, index) in tarjetas" 
                   :key="index"
                   class="mb-3 pa-3 rounded-lg tarjeta-item"
+                  :class="{ seleccionada: tarjetaSeleccionada === index }"
                   flat
+                  @click="seleccionarTarjeta(index)"
                 >
                   <div class="d-flex justify-space-between align-center">
                     <div>
                       <div class="text-subtitle-1 font-weight-bold text-black">{{ tarjeta.banco }}</div>
-                      <div class="text-body-2 text-grey">{{ tarjeta.tipo }}</div>
+                      <div class="text-body-2 text-black">{{ tarjeta.tipo }}</div>
                     </div>
                     <div class="text-green text-subtitle-1 font-weight-bold">
                       {{ tarjeta.numero }}
-                      <v-btn variant="text" color="black" @click="onEliminarTarjeta(tarjeta.id)">
-                            <v-icon color="green">mdi-trash-can</v-icon>
-                      </v-btn>
                     </div>
                   </div>
                 </v-card>
@@ -79,7 +49,64 @@
                 </div>
               </div>
             </div>
+            <v-row class="mt-4 mb-1 mr-1 ma-1" justify="end" align="center">
+              <v-btn
+                color="green-lighten-1"
+                class="text-white font-weight-bold mr-2"
+                rounded
+                @click="onAñadirTarjetaClick"
+              >
+                <v-icon start class="mr-1">mdi-plus</v-icon>
+                Añadir Tarjeta
+              </v-btn>
+            </v-row>
+
           </v-card>
+
+          <v-dialog v-model="mostrarDialogoEliminar" max-width="450" overlay-color="rgba(0, 0, 0, 0.7)">
+            <v-card class="pa-4 rounded-lg" color="white">
+              <v-card-title class="text-h6 font-weight-bold ml-2 mt-4">
+                Detalles de tarjeta
+              </v-card-title>
+              <v-card-text class="text-body-1">
+                Has seleccionado esta tarjeta:
+                <v-card class="mt-4 pa-3 tarjeta-item">
+                  <div class="text-subtitle-1 font-weight-bold text-black">{{ tarjetaSeleccionadaData?.banco }}</div>
+                  <div class="text-body-2 text-black">{{ tarjetaSeleccionadaData?.tipo }}</div>
+                  <div class="text-green text-subtitle-1 font-weight-bold">{{ tarjetaSeleccionadaData?.numero }}</div>
+                </v-card>
+              </v-card-text>
+              <v-card-actions class="mt-4">
+                <v-spacer></v-spacer>
+                <v-btn variant="text" color="grey" @click="mostrarDialogoEliminar = false">Cerrar</v-btn>
+                <v-btn color="green-lighten-1" class="text-white font-weight-bold" @click="mostrarConfirmacionFinal = true">
+                  Eliminar Tarjeta
+                </v-btn>
+
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+          <v-dialog v-model="mostrarConfirmacionFinal" max-width="400" overlay-color="rgba(0, 0, 0, 0.7)">
+            <v-card class="pa-4 rounded-lg" color="white">
+              <v-card-title class="text-h6 font-weight-bold ml-2 mt-4">
+                ¿Estás seguro?
+              </v-card-title>
+              <v-card-text class="text-body-1">
+                Esta acción eliminará la tarjeta de forma permanente.
+                <br><strong>{{ tarjetaSeleccionadaData?.banco }} - {{ tarjetaSeleccionadaData?.numero }}</strong>
+              </v-card-text>
+              <v-card-actions class="mt-4">
+                <v-spacer></v-spacer>
+                <v-btn variant="text" color="grey" @click="mostrarConfirmacionFinal = false">
+                  Cancelar
+                </v-btn>
+                <v-btn color="green-lighten-1" class="text-white font-weight-bold" @click="confirmarEliminarTarjeta">
+                  Confirmar
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
 
         </v-container>
       </v-container>
@@ -93,6 +120,10 @@
   
   const router = useRouter()
   const mostrarTarjetas = ref(true); // Cambiar a false para mostrar mensaje de "No hay tarjetas"
+  const tarjetaSeleccionada = ref<number | null>(null);
+  const mostrarDialogoEliminar = ref(false);
+  const mostrarConfirmacionFinal = ref(false);
+
 
   // Genera varios tarjetas de ejemplo para mostrar scrolling
   const tarjetasEjemplo = [
@@ -128,19 +159,38 @@
     }
   ];
 
-  const tarjetas = tarjetasEjemplo;
+  const tarjetas = ref([...tarjetasEjemplo]); // reactividad
 
-  const hayTarjetas = computed(() => mostrarTarjetas.value && tarjetas.length > 0);
+  const hayTarjetas = computed(() => mostrarTarjetas.value && tarjetas.value.length > 0);
+  const tarjetaSeleccionadaData = computed(() =>
+  tarjetaSeleccionada.value !== null ? tarjetas.value[tarjetaSeleccionada.value] : null
+);
+
 
   function onVolverClick() {
     router.push('./HomePage')
   }
-  function onEliminarTarjeta(id: number) {
-    console.log('Eliminar tarjeta con ID:', id);
-  } 
   function onAñadirTarjetaClick() {
     console.log('Añadir tarjeta');
   }
+  function seleccionarTarjeta(index: number) {
+  tarjetaSeleccionada.value = index === tarjetaSeleccionada.value ? null : index;
+  if (tarjetaSeleccionada.value !== null) {
+    mostrarDialogoEliminar.value = true;
+  }
+}
+
+function confirmarEliminarTarjeta() {
+  if (tarjetaSeleccionada.value !== null) {
+    const eliminada = tarjetas.value.splice(tarjetaSeleccionada.value, 1);
+    console.log('Eliminada:', eliminada[0]);
+    tarjetaSeleccionada.value = null;
+    mostrarDialogoEliminar.value = false;
+    mostrarConfirmacionFinal.value = false;
+  }
+}
+
+
   </script>
 
   <style scoped>
@@ -211,6 +261,7 @@
     max-height: 350px;
     overflow-y: auto;
     padding-right: 8px;
+    margin-top: 20px;
   }
 
   /* Personalización de la barra de scroll */
@@ -245,7 +296,7 @@
   }
 
   .tarjeta-item:hover {
-    background-color:rgb(227, 243, 228) !important;
+    background-color:rgb(237, 237, 237) !important;
   }
 
   .text-red {
@@ -267,4 +318,13 @@
     height: 36px !important;
     border-radius: 50% !important;
   }
+  .tarjeta-item.seleccionada {
+  border: 2px solid #4CAF50 !important;
+  background-color: rgb(237, 237, 237) !important;
+}
+.v-overlay__scrim {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+
   </style>

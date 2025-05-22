@@ -15,7 +15,7 @@
           class="back-button pl-1"
         >
           <v-icon start>mdi-arrow-left</v-icon>
-          Atrás
+          Volver
         </v-btn>
 
         <v-card class="pa-6 container-card bg-grey-lighten-2" rounded="lg">
@@ -47,11 +47,7 @@
           </v-card>
 
           <!-- Botones -->
-          <v-row class="mt-4 mb-1 mr-1" justify="space-between" align="center">
-            <v-btn variant="text" color="black" @click="onVolverHomeClick">
-              <v-icon start>mdi-chevron-left</v-icon>
-              Volver a Hogar
-            </v-btn>
+          <v-row class="mt-4 mb-1 mr-1" justify="end" align="center">
             <v-btn
               color="green-lighten-1"
               class="text-white font-weight-bold"
