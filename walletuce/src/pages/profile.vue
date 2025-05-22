@@ -2,7 +2,7 @@
     <v-app>
       <v-container fluid class="pa-0 main-bg overflow-y-auto">
         <!-- Barra superior -->
-        <AppHeader titulo="Ayuda" />
+        <AppHeader titulo="Mi Perfil" />
       </v-container>
     </v-app>
 </template>

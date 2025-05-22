@@ -29,10 +29,36 @@
       </div>
 
       <!-- Acciones -->
+
       <div class="d-flex align-center">
-        <v-btn icon @click="onConfigurationClick" class="mr-1">
-          <v-icon color="white">mdi-cog</v-icon>
-        </v-btn>
+        <!-- Botón de configuración con menú -->
+          <v-menu
+            v-model="menuVisible"
+            :close-on-content-click="true"
+            offset-y
+            transition="scale-transition"
+            location="bottom end"
+            :theme="'light'"
+          >
+            <template #activator="{ props }">
+              <v-btn icon v-bind="props">
+                <v-icon color="white">mdi-cog</v-icon>
+              </v-btn>
+            </template>
+
+            <!-- Aquí aplicamos el modo claro explícitamente -->
+            <v-card class="menu-card" width="200" color="white" :dark="false">
+              <v-list dense>
+                <v-list-item @click="onVerPerfil">
+                  <v-list-item-title class="text-black">Ver mi perfil</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="onCerrarSesion">
+                  <v-list-item-title class="text-green font-weight-bold">Cerrar sesión</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-menu>
+
         <v-btn class="ayuda-btn ml-2" @click="onAyudaClick">
           <v-icon left size="20">mdi-help-circle</v-icon>
           <span class="ayuda-text">Ayuda</span>
@@ -44,17 +70,29 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 defineProps<{ titulo: string }>()
 
 const hovering = ref(false)
+const menuVisible = ref(false)
 
-function onConfigurationClick() {
-  // lógica de configuración general
+function onVerPerfil() {
+  menuVisible.value = false
+  router.push('/profile') // Ajustá a tu ruta real
+}
+
+function onCerrarSesion() {
+  menuVisible.value = false
+  // Lógica real de logout aquí
+  console.log('Sesión cerrada')
 }
 
 function onAyudaClick() {
   // lógica de ayuda general
+  router.push("/help")
 }
 </script>
 
@@ -119,5 +157,18 @@ function onAyudaClick() {
 .fixed-title-width {
   min-width: 250px; /* Ajustá según el largo del titulo original */
 }
+.v-list-item:hover {
+  background-color: #f9f9f9 !important;
+}
+.v-menu__content {
+  background-color: white !important;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+.menu-card {
+  background-color: white !important;
+}
+
 
 </style>
