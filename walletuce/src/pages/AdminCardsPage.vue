@@ -168,7 +168,7 @@
 
 
   function onVolverClick() {
-    router.push('./HomePage')
+    router.back()
   }
   function onAñadirTarjetaClick() {
     console.log('Añadir tarjeta');
