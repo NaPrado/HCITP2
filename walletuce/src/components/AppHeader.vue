@@ -13,7 +13,7 @@
         @mouseenter="hovering = true"
         @mouseleave="hovering = false"
       >
-        <RouterLink to="/" class="d-flex align-center text-decoration-none">
+        <RouterLink to="/HomePage" class="d-flex align-center text-decoration-none">
           <v-avatar class="mr-3" size="40">
             <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40" cover />
           </v-avatar>
