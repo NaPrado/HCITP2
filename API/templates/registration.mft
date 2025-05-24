@@ -1,8 +1,8 @@
 <div style="text-align: center;">
     <h1>
-        <strong>Welcome <%FIRST_NAME%></strong>
+        <strong>Bienvenido <%FIRST_NAME%> a Walletuce</strong>
     </h1>
     <h3>
-        <strong>Your verification code is <span style="color: #fc987e;"><%VERIFICATION_CODE%></span></strong>
+        <strong>Su codigo de verificación es <span style="color:rgb(0, 195, 255);"><%VERIFICATION_CODE%></span></strong>
     </h3>
 </div>
