@@ -36,19 +36,30 @@
             :id="section.id"
             class="mb-12"
             >
-            <h2 class="text-h5 font-weight-bold mb-2 text-black">
-                {{ section.title }}
-            </h2>
-            <p class="mb-4 text-black">{{ section.description }}</p>
+                <h2 class="text-h5 font-weight-bold mb-2 text-black">
+                    {{ section.title }}
+                </h2>
+                <p class="mb-4 text-black">{{ section.description }}</p>
 
-            <v-card flat class="pa-4 white-stepper mb-4">
-                <div v-for="(step, index) in section.steps" :key="index" class="mb-4">
-                <h3 class="text-h6 font-weight-bold text-black mb-1">
-                    {{ index + 1 }}. {{ step.title }}
-                </h3>
-                <p class="text-black">{{ step.content }}</p>
-                </div>
-            </v-card>
+                <v-card flat class="pa-4 white-stepper mb-4">
+                    <div v-for="(step, index) in section.steps" :key="index" class="mb-4">
+                        <h3 class="text-h6 font-weight-bold text-black mb-1">
+                        {{ index + 1 }}. {{ step.title }}
+                        </h3>
+                        <p class="text-black mb-2">{{ step.content }}</p>
+
+                        <!-- Mostrar imagen si existe -->
+                        <v-img
+                        v-if="step.image"
+                        :src="step.image"
+                        class="my-2"
+                        max-width="60%"
+                        max-height="300"
+                        cover
+                        rounded
+                        />
+                    </div>
+                </v-card>
             </div>
         </v-container>
       </div>
@@ -66,9 +77,8 @@ const sections = [
     title: 'Ver movimientos',
     description: 'Accedé al historial de todas tus transacciones para llevar un control detallado de tus ingresos, egresos y actividades recientes.',
     steps: [
-      { title: 'Abrí el menú principal', content: 'Tocá el ícono de menú en la parte superior de la pantalla.' },
-      { title: 'Seleccioná "Movimientos"', content: 'Elegí esta opción para ver la lista de transacciones realizadas.' },
-      { title: 'Aplicá filtros si lo necesitás', content: 'Podés buscar por fechas, tipo de movimiento o estado.' }
+      { title: 'Accedé al menú de inicio', content: 'Tocá el ícono de Walletuce en la parte superior de la pantalla para volver al inicio.', image: null },
+      { title: 'Seleccioná "Ver Movimientos"', content: 'Elegí esta opción para ver la lista de transacciones realizadas.', image: '/src/assets/pasos/movimientos-indicado.png' },
     ]
   },
   {
@@ -76,11 +86,11 @@ const sections = [
     title: 'Ingresar Dinero',
     description: 'Podés aumentar tu saldo transfiriendo dinero desde una cuenta bancaria o utilizando una tarjeta de débito/crédito.',
     steps: [
-      { title: 'Abrí el menú principal', content: 'Hacé clic en el ícono de menú para desplegar las opciones disponibles.' },
-      { title: 'Seleccioná "Ingresar Dinero"', content: 'Dentro del menú, elegí esta función para comenzar el proceso.' },
-      { title: 'Elegí el método de ingreso', content: 'Podés optar por usar una cuenta bancaria o una tarjeta.' },
-      { title: 'Ingresá el monto', content: 'Especificá cuánto dinero querés ingresar.' },
-      { title: 'Confirmá la operación', content: 'Verificá los datos ingresados antes de confirmar.' }
+      { title: 'Accedé al menú de inicio', content: 'Tocá el ícono de Walletuce en la parte superior de la pantalla para volver al inicio.', image: null },
+      { title: 'Seleccioná "Ingresar Dinero"', content: 'Una vez dentro, se verá la opción de .', image: null },
+      { title: 'Elegí el método de ingreso', content: 'Podés optar por usar una cuenta bancaria o una tarjeta.', image: null },
+      { title: 'Ingresá el monto', content: 'Especificá cuánto dinero querés ingresar.', image: null },
+      { title: 'Confirmá la operación', content: 'Verificá los datos ingresados antes de confirmar.', image: null }
     ]
   },
   {
@@ -88,11 +98,11 @@ const sections = [
     title: 'Transferir Dinero',
     description: 'Realizá transferencias a otras cuentas de manera rápida y segura dentro de la aplicación.',
     steps: [
-      { title: 'Accedé al menú principal', content: 'Hacé clic en el ícono para desplegar las opciones.' },
-      { title: 'Seleccioná "Transferir Dinero"', content: 'Esta opción te llevará al formulario de transferencia.' },
-      { title: 'Completá los datos del destinatario', content: 'Ingresá alias, CBU o CVU del destinatario.' },
-      { title: 'Indicá el monto', content: 'Escribí cuánto querés transferir.' },
-      { title: 'Revisá y confirmá', content: 'Chequeá que toda la información esté correcta y finalizá.' }
+      { title: 'Accedé al menú principal', content: 'Hacé clic en el ícono para desplegar las opciones.', image: null },
+      { title: 'Seleccioná "Transferir Dinero"', content: 'Esta opción te llevará al formulario de transferencia.', image: null },
+      { title: 'Completá los datos del destinatario', content: 'Ingresá alias, CBU o CVU del destinatario.', image: null },
+      { title: 'Indicá el monto', content: 'Escribí cuánto querés transferir.', image: null },
+      { title: 'Revisá y confirmá', content: 'Chequeá que toda la información esté correcta y finalizá.', image: null }
     ]
   },
   {
@@ -100,10 +110,10 @@ const sections = [
     title: 'Generar Cobro',
     description: 'Solicitá pagos enviando un enlace o generando un código QR para que otra persona te transfiera dinero.',
     steps: [
-      { title: 'Ingresá al menú', content: 'Desde el ícono de menú, accedé a las opciones principales.' },
-      { title: 'Seleccioná "Generar Cobro"', content: 'Elegí esta opción para comenzar.' },
-      { title: 'Completá los datos del cobro', content: 'Ingresá el monto y una breve descripción (opcional).' },
-      { title: 'Generá el QR o link de cobro', content: 'Compartí el enlace o código para que te paguen.' }
+      { title: 'Ingresá al menú', content: 'Desde el ícono de menú, accedé a las opciones principales.', image: null },
+      { title: 'Seleccioná "Generar Cobro"', content: 'Elegí esta opción para comenzar.', image: null },
+      { title: 'Completá los datos del cobro', content: 'Ingresá el monto y una breve descripción (opcional).', image: null },
+      { title: 'Generá el QR o link de cobro', content: 'Compartí el enlace o código para que te paguen.', image: null }
     ]
   },
   {
@@ -111,10 +121,10 @@ const sections = [
     title: 'Realizar Pago',
     description: 'Pagá productos o servicios usando tu saldo disponible o una tarjeta asociada desde la app.',
     steps: [
-      { title: 'Abrí el menú', content: 'Tocá el menú para ver las funcionalidades.' },
-      { title: 'Seleccioná "Realizar Pago"', content: 'Elegí esta opción para iniciar un pago.' },
-      { title: 'Escaneá un código QR o ingresá los datos del comercio', content: 'Podés pagar con QR o manualmente.' },
-      { title: 'Confirmá el pago', content: 'Verificá el monto y origen de los fondos antes de aceptar.' }
+      { title: 'Abrí el menú', content: 'Tocá el menú para ver las funcionalidades.', image: null },
+      { title: 'Seleccioná "Realizar Pago"', content: 'Elegí esta opción para iniciar un pago.', image: null },
+      { title: 'Escaneá un código QR o ingresá los datos del comercio', content: 'Podés pagar con QR o manualmente.', image: null },
+      { title: 'Confirmá el pago', content: 'Verificá el monto y origen de los fondos antes de aceptar.', image: null }
     ]
   },
   {
@@ -122,12 +132,13 @@ const sections = [
     title: 'Administrar Tarjetas',
     description: 'Gestioná las tarjetas asociadas a tu cuenta: agregá nuevas, modificá datos o eliminá las que ya no usás.',
     steps: [
-      { title: 'Abrí el menú principal', content: 'Ingresá al menú desde el ícono correspondiente.' },
-      { title: 'Seleccioná "Administrar Tarjetas"', content: 'Ingresá a la sección para ver tus tarjetas registradas.' },
-      { title: 'Gestioná tus tarjetas', content: 'Podés agregar una nueva tarjeta, editar una existente o eliminarla.' }
+      { title: 'Abrí el menú principal', content: 'Ingresá al menú desde el ícono correspondiente.', image: null },
+      { title: 'Seleccioná "Administrar Tarjetas"', content: 'Ingresá a la sección para ver tus tarjetas registradas.', image: null },
+      { title: 'Gestioná tus tarjetas', content: 'Podés agregar una nueva tarjeta, editar una existente o eliminarla.', image: null }
     ]
   }
 ]
+
 
 
 const currentSteps = reactive(
