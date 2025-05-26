@@ -1,7 +1,19 @@
-<template>
-  <LandingPage/>
-</template>
+<script setup lang="ts">
+import { onMounted } from "vue";
+import { useRouter } from "vue-router";
 
-<script lang="ts" setup>
-import LandingPage from './LandingPage.vue'
+const router = useRouter();
+
+onMounted(() => {
+  const isAuthenticated = localStorage.getItem("auth") === "true";
+  if (isAuthenticated) {
+    router.replace("/HomePage");
+  } else {
+    router.replace("/LandingPage");
+  }
+});
 </script>
+
+<template>
+  <p>Redirigiendo...</p>
+</template>

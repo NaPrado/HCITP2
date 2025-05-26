@@ -6,23 +6,34 @@
     dark
     class="custom-app-bar"
   >
-    <v-container class="d-flex align-center justify-space-between fill-height pa-0">
+    <v-container
+      class="d-flex align-center justify-space-between fill-height pa-0"
+    >
       <!-- Logo + Título con hover -->
       <div
         class="d-flex align-center text-decoration-none link-wrapper px-2"
         @mouseenter="hovering = true"
         @mouseleave="hovering = false"
       >
-        <RouterLink to="/HomePage" class="d-flex align-center text-decoration-none">
+        <RouterLink
+          to="/HomePage"
+          class="d-flex align-center text-decoration-none"
+        >
           <v-avatar class="mr-3" size="40">
-            <v-img src="/src/assets/letucce.svg" alt="Logo" width="40" height="40" cover />
+            <v-img
+              src="/src/assets/letucce.svg"
+              alt="Logo"
+              width="40"
+              height="40"
+              cover
+            />
           </v-avatar>
           <transition name="fade-slide-up" mode="out-in">
             <v-toolbar-title
               :key="hovering ? 'walletuce' : 'titulo'"
               class="text-white font-weight-bold text-h5 fixed-title-width"
             >
-              {{ hovering ? 'Walletuce' : titulo }}
+              {{ hovering ? "Walletuce" : titulo }}
             </v-toolbar-title>
           </transition>
         </RouterLink>
@@ -32,32 +43,36 @@
 
       <div class="d-flex align-center">
         <!-- Botón de configuración con menú -->
-          <v-menu
-            v-model="menuVisible"
-            :close-on-content-click="true"
-            offset-y
-            transition="scale-transition"
-            location="bottom end"
-            :theme="'light'"
-          >
-            <template #activator="{ props }">
-              <v-btn icon v-bind="props">
-                <v-icon color="white">mdi-cog</v-icon>
-              </v-btn>
-            </template>
+        <v-menu
+          v-model="menuVisible"
+          :close-on-content-click="true"
+          offset-y
+          transition="scale-transition"
+          location="bottom end"
+          :theme="'light'"
+        >
+          <template #activator="{ props }">
+            <v-btn icon v-bind="props">
+              <v-icon color="white">mdi-cog</v-icon>
+            </v-btn>
+          </template>
 
-            <!-- Aquí aplicamos el modo claro explícitamente -->
-            <v-card class="menu-card" width="200" color="white" :dark="false">
-              <v-list dense>
-                <v-list-item @click="onVerPerfil">
-                  <v-list-item-title class="text-black">Ver mi perfil</v-list-item-title>
-                </v-list-item>
-                <v-list-item @click="onCerrarSesion">
-                  <v-list-item-title class="text-green font-weight-bold">Cerrar sesión</v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-card>
-          </v-menu>
+          <!-- Aquí aplicamos el modo claro explícitamente -->
+          <v-card class="menu-card" width="200" color="white" :dark="false">
+            <v-list dense>
+              <v-list-item @click="onVerPerfil">
+                <v-list-item-title class="text-black"
+                  >Ver mi perfil</v-list-item-title
+                >
+              </v-list-item>
+              <v-list-item @click="onCerrarSesion">
+                <v-list-item-title class="text-green font-weight-bold"
+                  >Cerrar sesión</v-list-item-title
+                >
+              </v-list-item>
+            </v-list>
+          </v-card>
+        </v-menu>
 
         <v-btn class="ayuda-btn ml-2" @click="onAyudaClick">
           <v-icon left size="20">mdi-help-circle</v-icon>
@@ -69,30 +84,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { Api } from "../api/api";
+import { UserApi } from "../api/user";
 
-const router = useRouter()
+const router = useRouter();
 
-defineProps<{ titulo: string }>()
+defineProps<{ titulo: string }>();
 
-const hovering = ref(false)
-const menuVisible = ref(false)
+const hovering = ref(false);
+const menuVisible = ref(false);
 
 function onVerPerfil() {
-  menuVisible.value = false
-  router.push('/profile') // Ajustá a tu ruta real
+  menuVisible.value = false;
+  router.push("/profile"); // Ajustá a tu ruta real
 }
 
-function onCerrarSesion() {
-  menuVisible.value = false
-  // Lógica real de logout aquí
-  router.push("/LandingPage")
+async function onCerrarSesion() {
+  menuVisible.value = false;
+  try {
+    await UserApi.logout();
+  } catch (e) {}
+  Api.token = null;
+  localStorage.removeItem("auth");
+  localStorage.removeItem("token");
+  router.push("/LandingPage");
 }
 
 function onAyudaClick() {
   // lógica de ayuda general
-  router.push("/help")
+  router.push("/help");
 }
 </script>
 
@@ -138,7 +160,6 @@ function onAyudaClick() {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
 }
 
-
 .ayuda-text {
   margin-left: 6px;
   font-weight: 600;
@@ -169,6 +190,4 @@ function onAyudaClick() {
 .menu-card {
   background-color: white !important;
 }
-
-
 </style>
