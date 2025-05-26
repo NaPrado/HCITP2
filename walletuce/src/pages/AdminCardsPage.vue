@@ -14,10 +14,23 @@
 
             <!-- Lista de tarjetas scrolleable -->
             <div class="tarjetas-container">
-              <div v-if="hayTarjetas" class="tarjetas-lista">
+              <v-progress-circular
+                v-if="cargando"
+                indeterminate
+                color="green-lighten-1"
+                class="mt-4"
+              ></v-progress-circular>
+              
+              <div v-else-if="error" class="d-flex flex-column align-center justify-center no-tarjetas">
+                <div class="text-h6 text-grey-darken-1 font-weight-medium text-center">
+                  {{ error }}
+                </div>
+              </div>
+
+              <div v-else-if="hayTarjetas" class="tarjetas-lista">
                 <v-card 
                   v-for="(tarjeta, index) in tarjetas" 
-                  :key="index"
+                  :key="tarjeta.id"
                   class="mb-3 pa-3 rounded-lg tarjeta-item"
                   :class="{ seleccionada: tarjetaSeleccionada === index }"
                   flat
@@ -33,13 +46,6 @@
                     </div>
                   </div>
                 </v-card>
-                
-                <!-- Botón de más tarjetas -->
-                <div class="text-center my-3">
-                  <v-btn variant="text" color="grey" density="comfortable" class="more-btn">
-                    <v-icon>mdi-dots-horizontal</v-icon>
-                  </v-btn>
-                </div>
               </div>
 
               <!-- Mensaje cuando no hay tarjetas -->
@@ -54,7 +60,7 @@
                 color="green-lighten-1"
                 class="text-white font-weight-bold mr-2"
                 rounded
-                @click="onAñadirTarjetaClick"
+                @click="mostrarDialogoAgregar = true"
               >
                 <v-icon start class="mr-1">mdi-plus</v-icon>
                 Añadir Tarjeta
@@ -62,6 +68,101 @@
             </v-row>
 
           </v-card>
+
+          <!-- Modal para agregar tarjeta -->
+          <v-dialog v-model="mostrarDialogoAgregar" max-width="500" overlay-color="rgba(0, 0, 0, 0.7)">
+            <v-card class="pa-4 rounded-lg" color="white">
+              <v-card-title class="text-h6 font-weight-bold ml-2 mt-4">
+                Agregar Nueva Tarjeta
+              </v-card-title>
+              <v-card-text>
+                <v-alert
+                  v-if="errorAgregar"
+                  type="error"
+                  class="mb-4"
+                  closable
+                  @click="errorAgregar = ''"
+                >
+                  {{ errorAgregar }}
+                </v-alert>
+                <v-form @submit.prevent="agregarTarjeta" ref="form">
+                  <v-text-field
+                    v-model="nuevaTarjeta.fullName"
+                    label="Nombre en la tarjeta"
+                    required
+                    :rules="[v => !!v || 'El nombre es requerido']"
+                  ></v-text-field>
+
+                  <v-text-field
+                    v-model="nuevaTarjeta.number"
+                    label="Número de tarjeta"
+                    required
+                    :rules="[
+                      v => !!v || 'El número es requerido',
+                      v => cleanCardNumber(v).length === 16 || 'Debe tener 16 dígitos',
+                      v => /^[\d\s]+$/.test(v) || 'Solo se permiten números'
+                    ]"
+                    maxlength="19"
+                    placeholder="4895 7487 6869 5219"
+                  ></v-text-field>
+
+                  <v-row>
+                    <v-col cols="6">
+                      <v-text-field
+                        v-model="nuevaTarjeta.cvv"
+                        label="CVV"
+                        required
+                        :rules="[
+                          v => !!v || 'El CVV es requerido',
+                          v => /^\d{3,4}$/.test(v) || 'CVV inválido'
+                        ]"
+                        maxlength="4"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="6">
+                      <v-text-field
+                        v-model="nuevaTarjeta.expirationDate"
+                        label="MM/YY"
+                        required
+                        :rules="[
+                          v => !!v || 'La fecha es requerida',
+                          v => /^\d{2}\/\d{2}$/.test(v) || 'Formato MM/YY'
+                        ]"
+                        placeholder="MM/YY"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+
+                  <v-select
+                    v-model="nuevaTarjeta.type"
+                    :items="[
+                      { value: 'CREDIT', text: 'Crédito' },
+                      { value: 'DEBIT', text: 'Débito' }
+                    ]"
+                    item-title="text"
+                    item-value="value"
+                    label="Tipo de tarjeta"
+                    required
+                    :rules="[v => !!v || 'Seleccione un tipo']"
+                  ></v-select>
+                </v-form>
+              </v-card-text>
+              <v-card-actions class="mt-4">
+                <v-spacer></v-spacer>
+                <v-btn variant="text" color="grey" @click="mostrarDialogoAgregar = false">
+                  Cancelar
+                </v-btn>
+                <v-btn 
+                  color="green-lighten-1" 
+                  class="text-white font-weight-bold" 
+                  @click="agregarTarjeta"
+                  :loading="guardando"
+                >
+                  Agregar
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
 
           <v-dialog v-model="mostrarDialogoEliminar" max-width="450" overlay-color="rgba(0, 0, 0, 0.7)">
             <v-card class="pa-4 rounded-lg" color="white">
@@ -115,81 +216,173 @@
 
   <script setup lang="ts">
   import { useRouter } from 'vue-router'
-  import { ref, computed } from 'vue';
+  import { ref, computed, onMounted, watch } from 'vue';
   import AppHeader from "../components/AppHeader.vue";
+  import { CardApi, Card } from "../api/card.js";
+  import { Api } from "../api/api.js";
   
   const router = useRouter()
-  const mostrarTarjetas = ref(true); // Cambiar a false para mostrar mensaje de "No hay tarjetas"
   const tarjetaSeleccionada = ref<number | null>(null);
   const mostrarDialogoEliminar = ref(false);
   const mostrarConfirmacionFinal = ref(false);
+  const mostrarDialogoAgregar = ref(false);
+  const tarjetas = ref([]);
+  const cargando = ref(true);
+  const guardando = ref(false);
+  const form = ref(null);
+  const error = ref('');
+  const errorAgregar = ref('');
 
+  const nuevaTarjeta = ref({
+    fullName: '',
+    number: '',
+    cvv: '',
+    expirationDate: '',
+    type: 'CREDIT'
+  });
 
-  // Genera varios tarjetas de ejemplo para mostrar scrolling
-  const tarjetasEjemplo = [
-    {
-      banco: 'HCIB',
-      tipo: 'Credito',
-      numero: '**** **** **** 1234'
-    },
-    {
-      banco: 'Bancolombia',
-      tipo: 'Credito',
-      numero: '**** **** **** 1234'
-    },
-    {
-      banco: 'Scotiabank',
-      tipo: 'Credito',
-      numero: '**** **** **** 1234'
-    },
-    {
-      banco: 'Davivienda',
-      tipo: 'Credito',
-      numero: '**** **** **** 1234'
-    },
-    {
-      banco: 'Nequi',
-      tipo: 'Debito',
-      numero: '**** **** **** 1234'
-    },
-    {
-      banco: 'Daviplata',
-      tipo: 'Debito',
-      numero: '**** **** **** 1234'
-    }
+  const bancos = [
+    { value: 'HCIB', text: 'HCIB' },
+    { value: 'Santander', text: 'Santander' },
+    { value: 'BBVA', text: 'BBVA' },
+    { value: 'Galicia', text: 'Galicia' },
+    { value: 'ICBC', text: 'ICBC' }
   ];
 
-  const tarjetas = ref([...tarjetasEjemplo]); // reactividad
-
-  const hayTarjetas = computed(() => mostrarTarjetas.value && tarjetas.value.length > 0);
+  const hayTarjetas = computed(() => tarjetas.value.length > 0);
   const tarjetaSeleccionadaData = computed(() =>
   tarjetaSeleccionada.value !== null ? tarjetas.value[tarjetaSeleccionada.value] : null
 );
 
+  onMounted(async () => {
+    if (!Api.token) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const cards = await CardApi.getAll();
+      if (Array.isArray(cards)) {
+        tarjetas.value = cards.map(card => ({
+          banco: card.fullName,
+          tipo: card.type === 'CREDIT' ? 'Crédito' : 'Débito',
+          numero: `**** **** **** ${card.number.slice(-4)}`,
+          id: card.id
+        }));
+      } else {
+        tarjetas.value = [];
+      }
+    } catch (e) {
+      console.error('Error al cargar tarjetas:', e);
+      if (e.code === 97 && e.description === 'Unauthorized.') {
+        router.push('/login');
+      } else {
+        tarjetas.value = [];
+      }
+    } finally {
+      cargando.value = false;
+    }
+  });
 
   function onVolverClick() {
     router.back()
   }
-  function onAñadirTarjetaClick() {
-    console.log('Añadir tarjeta');
+
+  // Función para formatear el número de tarjeta
+  function formatCardNumber(value: string): string {
+    if (!value) return '';
+    const cleaned = value.replace(/\s/g, '');
+    const groups = cleaned.match(/.{1,4}/g);
+    return groups ? groups.join(' ') : cleaned;
   }
+
+  // Función para limpiar el número de tarjeta
+  function cleanCardNumber(value: string): string {
+    return value.replace(/\s/g, '');
+  }
+
+  // Watch para formatear el número mientras se escribe
+  watch(() => nuevaTarjeta.value.number, (newValue) => {
+    if (newValue) {
+      const cleaned = cleanCardNumber(newValue);
+      if (cleaned !== newValue) {
+        nuevaTarjeta.value.number = formatCardNumber(cleaned);
+      }
+    }
+  });
+
+  async function agregarTarjeta() {
+    if (!form.value?.validate()) return;
+    errorAgregar.value = '';
+
+    guardando.value = true;
+    try {
+      if (!Api.token) {
+        router.push('/login');
+        return;
+      }
+
+      const cleanedNumber = cleanCardNumber(nuevaTarjeta.value.number);
+      const nuevaCard = new Card(
+        null,
+        nuevaTarjeta.value.fullName,
+        nuevaTarjeta.value.cvv,
+        cleanedNumber,
+        nuevaTarjeta.value.expirationDate,
+        nuevaTarjeta.value.type
+      );
+
+      const cardCreada = await CardApi.add(nuevaCard);
+      
+      tarjetas.value.push({
+        banco: cardCreada.fullName,
+        tipo: cardCreada.type === 'CREDIT' ? 'Crédito' : 'Débito',
+        numero: `**** **** **** ${cardCreada.number.slice(-4)}`,
+        id: cardCreada.id
+      });
+
+      nuevaTarjeta.value = {
+        fullName: '',
+        number: '',
+        cvv: '',
+        expirationDate: '',
+        type: 'CREDIT'
+      };
+      mostrarDialogoAgregar.value = false;
+    } catch (e) {
+      console.error('Error al agregar tarjeta:', e);
+      if (e.code === 97 && e.description === 'Unauthorized.') {
+        router.push('/login');
+      } else {
+        errorAgregar.value = e.description || 'Error al agregar la tarjeta';
+      }
+    } finally {
+      guardando.value = false;
+    }
+  }
+
   function seleccionarTarjeta(index: number) {
-  tarjetaSeleccionada.value = index === tarjetaSeleccionada.value ? null : index;
-  if (tarjetaSeleccionada.value !== null) {
-    mostrarDialogoEliminar.value = true;
+    tarjetaSeleccionada.value = index === tarjetaSeleccionada.value ? null : index;
+    if (tarjetaSeleccionada.value !== null) {
+      mostrarDialogoEliminar.value = true;
+    }
   }
-}
 
-function confirmarEliminarTarjeta() {
-  if (tarjetaSeleccionada.value !== null) {
-    const eliminada = tarjetas.value.splice(tarjetaSeleccionada.value, 1);
-    console.log('Eliminada:', eliminada[0]);
-    tarjetaSeleccionada.value = null;
-    mostrarDialogoEliminar.value = false;
-    mostrarConfirmacionFinal.value = false;
+  async function confirmarEliminarTarjeta() {
+    if (tarjetaSeleccionada.value !== null) {
+      const tarjeta = tarjetas.value[tarjetaSeleccionada.value];
+      try {
+        await CardApi.remove(tarjeta.id);
+        tarjetas.value.splice(tarjetaSeleccionada.value, 1);
+        tarjetaSeleccionada.value = null;
+        mostrarDialogoEliminar.value = false;
+        mostrarConfirmacionFinal.value = false;
+      } catch (e) {
+        console.error('Error al eliminar tarjeta:', e);
+        // Aquí podrías mostrar un mensaje de error al usuario
+      }
+    }
   }
-}
-
 
   </script>
 

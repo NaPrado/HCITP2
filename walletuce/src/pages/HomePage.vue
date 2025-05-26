@@ -2,7 +2,7 @@
   <v-app>
     <v-container fluid class="pa-0 main-bg">
       <!-- Barra superior -->
-      <AppHeader titulo="Bienvenido, Matias" />
+      <AppHeader :titulo="'Bienvenido, ' + (userName || 'Usuario')" />
 
       <!-- Contenido principal -->
       <v-container
@@ -19,7 +19,7 @@
             >
             <v-container
               class="text-h6 font-weight-bold text-grey-lighten-4 pa-0"
-              >$205.376,82</v-container
+              >{{ formattedBalance }}</v-container
             >
           </v-container>
           <!-- Tarjeta de movimientos -->
@@ -86,8 +86,32 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
+import { UserApi } from "../api/user.js";
+import { ref, onMounted, computed } from "vue";
 
 const router = useRouter();
+const userName = ref("");
+const balance = ref(0);
+
+function formatBalance(amount: number) {
+  return amount.toLocaleString('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    minimumFractionDigits: 2
+  });
+}
+
+const formattedBalance = computed(() => formatBalance(balance.value));
+
+onMounted(async () => {
+  try {
+    const user = await UserApi.get();
+    userName.value = user.firstName;
+    balance.value = user.balance || 0;
+  } catch (error) {
+    console.error("Error al obtener datos del usuario:", error);
+  }
+});
 
 const actions = [
   {

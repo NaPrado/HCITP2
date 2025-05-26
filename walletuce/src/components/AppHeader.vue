@@ -52,8 +52,8 @@
           :theme="'light'"
         >
           <template #activator="{ props }">
-            <v-btn icon v-bind="props">
-              <v-icon color="white">mdi-cog</v-icon>
+            <v-btn icon v-bind="props" class="bg-white" width="35" height="35">
+              <v-icon color="green-darken-3 ">mdi-account</v-icon>
             </v-btn>
           </template>
 
@@ -175,7 +175,7 @@ function onAyudaClick() {
 }
 
 .fixed-title-width {
-  min-width: 250px; /* Ajustá según el largo del titulo original */
+  min-width: 500px; /* Ajustá según el largo del titulo original */
 }
 .v-list-item:hover {
   background-color: #f9f9f9 !important;
