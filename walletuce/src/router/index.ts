@@ -26,20 +26,23 @@ router.beforeEach((to, from, next) => {
   const isAuthenticated =
     token && token !== "undefined" && token !== "null" && token.trim() !== "";
 
-  // Ajusta estos paths según tus rutas públicas reales
   const publicPages = [
     "/",
     "/login",
     "/register",
     "/forgot-password",
     "/emailVerification",
+    "/LandingPage",
   ];
   const isPublic = publicPages.includes(to.path);
 
   if (!isAuthenticated && !isPublic) {
     return next("/login");
   }
-  if (isAuthenticated && (to.path === "/login" || to.path === "/register")) {
+  if (
+    isAuthenticated &&
+    ["/login", "/register", "/LandingPage"].includes(to.path)
+  ) {
     return next("/HomePage");
   }
   next();

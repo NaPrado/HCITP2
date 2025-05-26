@@ -113,7 +113,6 @@ async function onCerrarSesion() {
 }
 
 function onAyudaClick() {
-  // lógica de ayuda general
   router.push("/help");
 }
 </script>
