@@ -33,8 +33,16 @@ router.beforeEach((to, from, next) => {
     "/forgot-password",
     "/emailVerification",
     "/LandingPage",
+    "/PaymentPage/:id"
   ];
-  const isPublic = publicPages.includes(to.path);
+  const isPublic = publicPages.some(pattern => {
+    // Convertir el patrón de ruta a una expresión regular
+    const regexPattern = pattern
+      .replace(/:[^/]+/g, '[^/]+') // Reemplazar :param con [^/]+ para coincidir con cualquier cosa excepto /
+      .replace(/\//g, '\\/'); // Escapar las barras
+    const regex = new RegExp(`^${regexPattern}$`);
+    return regex.test(to.path);
+  });
 
   if (!isAuthenticated && !isPublic) {
     return next("/login");

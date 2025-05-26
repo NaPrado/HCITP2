@@ -16,26 +16,83 @@
             <div class="card-container">
               <v-card class="pa-4 mb-4 card-with-shadow equal-width-card" color="green-lighten-1" rounded="lg">
                 <v-card-title class="text-white font-weight-bold"><h2>Monto a cobrar</h2></v-card-title>
-                <v-text-field placeholder="Ingrese un monto" v-model="monto" type="number" hide-details class="ml-2 mr-2 bg-grey-lighten-4"></v-text-field>
+                <v-text-field 
+                  placeholder="Ingrese un monto" 
+                  v-model="monto" 
+                  type="number" 
+                  hide-details 
+                  class="ml-2 mr-2 bg-grey-lighten-4"
+                  :error-messages="errorMonto"
+                  @input="errorMonto = ''"
+                ></v-text-field>
               </v-card>
               
               <v-card class="pa-4 mb-4 card-with-shadow equal-width-card" color="green-lighten-1" rounded="lg">
-                <v-card-title class="text-white font-weight-bold"><h2>Titulo</h2></v-card-title>
-                <v-text-field placeholder="Ingrese un titulo" v-model="titulo" hide-details class="ml-2 mr-2 bg-grey-lighten-4"></v-text-field>
+                <v-card-title class="text-white font-weight-bold"><h2>Descripción</h2></v-card-title>
+                <v-text-field 
+                  placeholder="Ingrese una descripción" 
+                  v-model="descripcion" 
+                  hide-details 
+                  class="ml-2 mr-2 bg-grey-lighten-4"
+                  :error-messages="errorDescripcion"
+                  @input="errorDescripcion = ''"
+                ></v-text-field>
               </v-card>
             </div>
   
+            <!-- Alerta de error -->
+            <v-alert
+              v-if="error"
+              type="error"
+              class="mb-4"
+              closable
+              @click="error = ''"
+            >
+              {{ error }}
+            </v-alert>
+  
+            <!-- ID de pago generado -->
+            <v-alert
+              v-if="paymentId"
+              type="success"
+              class="mb-4"
+            >
+              ID de pago generado: {{ paymentId }}
+            </v-alert>
+  
             <!-- Botones -->
             <v-row class="mt-4 mb-1 mr-1" justify="end">
-              <v-btn color="green-lighten-1" class="second-button text-white font-weight-bold" rounded @click="onGenerarLinkClick" align="right">
-                Generar Link
-                <v-icon class="ml-2">mdi-link</v-icon>
-              </v-btn>
-              <v-btn color="green-lighten-1" class="text-white font-weight-bold ml-4" rounded @click="onGenerarQRClick" align="right">
-                Generar QR
-                <v-icon class="ml-2">mdi-qrcode</v-icon>
+              <v-btn 
+                color="green-lighten-1" 
+                class="text-white font-weight-bold" 
+                rounded 
+                @click="onCopiarCodigoClick"
+                :loading="procesando"
+                :disabled="!isValid"
+              >
+                Copiar Código
+                <v-icon class="ml-2">mdi-content-copy</v-icon>
               </v-btn>
             </v-row>
+  
+            <!-- Snackbar para notificaciones -->
+            <v-snackbar
+              v-model="snackbar"
+              :color="snackbarColor"
+              :timeout="3000"
+              location="top"
+            >
+              {{ snackbarText }}
+              <template v-slot:actions>
+                <v-btn
+                  color="white"
+                  variant="text"
+                  @click="snackbar = false"
+                >
+                  Cerrar
+                </v-btn>
+              </template>
+            </v-snackbar>
   
           </v-card>
         </v-container>
@@ -45,70 +102,150 @@
   
   <script setup lang="ts">
   import { useRouter } from 'vue-router'
-  import { ref } from 'vue';
+  import { ref, computed } from 'vue';
+  import { PaymentsService } from '../api/payments.js';
+  import { Api } from '../api/api.js';
+  import AppHeader from "../components/AppHeader.vue";
   
   const router = useRouter()
 
-  const monto = ref();
-  const titulo = ref("");
+  const monto = ref("");
+  const descripcion = ref("");
+  const error = ref("");
+  const errorMonto = ref("");
+  const errorDescripcion = ref("");
+  const procesando = ref(false);
+  const paymentId = ref("");
+  
+  // Snackbar
+  const snackbar = ref(false);
+  const snackbarText = ref("");
+  const snackbarColor = ref("success");
+  
+  // Validación
+  const isValid = computed(() => {
+    return monto.value && parseFloat(monto.value) > 0;
+  });
   
   function onVolverClick() {
     router.push('./HomePage')
   }
-  function onGenerarLinkClick() {
-    router.push('./HomePage')
+  
+  async function generarCobro() {
+    if (!isValid.value) {
+      error.value = 'Por favor ingrese un monto válido';
+      return null;
+    }
+  
+    error.value = '';
+    errorMonto.value = '';
+    errorDescripcion.value = '';
+  
+    try {
+      const paymentData = {
+        amount: parseFloat(monto.value),
+        description: descripcion.value || ""
+      };
+  
+      console.log('Sending payment data:', paymentData);
+      const response = await PaymentsService.createPaymentRequest(paymentData);
+      console.log('Payment response:', response);
+
+      if (!response || !response.id) {
+        throw new Error('La respuesta del servidor no incluye un ID de pago');
+      }
+
+      // Mostrar el ID generado
+      snackbarColor.value = "success";
+      snackbarText.value = `Pago generado con ID: ${response.id}`;
+      snackbar.value = true;
+
+      return response;
+    } catch (e) {
+      console.error('Error al generar cobro:', e);
+      if (e.code === 97 && e.description === 'Unauthorized.') {
+        router.push('/login');
+      } else {
+        error.value = e.description || 'Error al generar el cobro';
+        snackbarColor.value = "error";
+        snackbarText.value = error.value;
+        snackbar.value = true;
+      }
+      return null;
+    }
   }
-  function onGenerarQRClick() {
-    router.push('./HomePage')
-  }
-  function onConfigurationClick() {
-    // lógica de configuración
-  }
-  function onAyudaClick() {
-    // lógica de ayuda
+  
+  async function onCopiarCodigoClick() {
+    procesando.value = true;
+    try {
+      const payment = await generarCobro();
+      if (payment && payment.id) {
+        const paymentCode = payment.id;
+        console.log('Code to copy:', paymentCode);
+        
+        // Método 1: API moderna
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(paymentCode);
+            console.log('Copied using modern API');
+            snackbarColor.value = "success";
+            snackbarText.value = "Código de pago copiado al portapapeles";
+            snackbar.value = true;
+            return;
+          } catch (e) {
+            console.error('Modern clipboard API failed:', e);
+          }
+        }
+
+        // Método 2: execCommand
+        try {
+          const textArea = document.createElement("textarea");
+          textArea.value = paymentCode;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '0';
+          textArea.style.top = '0';
+          textArea.style.opacity = '0';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          
+          const successful = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          if (successful) {
+            console.log('Copied using execCommand');
+            snackbarColor.value = "success";
+            snackbarText.value = "Código de pago copiado al portapapeles";
+          } else {
+            throw new Error('execCommand copy failed');
+          }
+        } catch (e) {
+          console.error('Fallback clipboard failed:', e);
+          // Método 3: Mostrar el código para copiar manualmente
+          snackbarColor.value = "warning";
+          snackbarText.value = `Código de pago: ${paymentCode}`;
+        }
+        snackbar.value = true;
+      } else {
+        throw new Error('No payment ID received');
+      }
+    } catch (e) {
+      console.error('Error in onCopiarCodigoClick:', e);
+      snackbarColor.value = "error";
+      snackbarText.value = "Error al generar el código";
+      snackbar.value = true;
+    } finally {
+      procesando.value = false;
+    }
   }
   </script>
   
   <style scoped>
-  .second-button {
-    margin-left: 120px;
-  }
   .main-bg {
     background: #eee !important;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-  }
-  
-  .ayuda-btn {
-    background: #f3eafe !important;
-    border-radius: 10px !important;
-    font-weight: bold;
-    font-size: 1.15rem;
-    padding: 4px 18px 4px 10px;
-    display: flex;
-    align-items: center;
-    min-height: 40px;
-    height: 40px;
-    transition: background 0.2s;
-    gap: 4px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
-  }
-  .ayuda-btn:hover {
-    background: #e1d5f6 !important;
-  }
-  .ayuda-text {
-    font-weight: bold;
-    margin-left: 2px;
-    font-size: 1.1rem;
-  }
-  .ayuda-btn .v-icon {
-    font-size: 18px !important;
-    margin-right: 2px;
-    vertical-align: middle;
-  }
-  .avatar-espaciado {
-    margin-left: 16px;
   }
   
   .container-card {
@@ -132,16 +269,7 @@
     flex-direction: column;
     align-items: center;
   }
-  .custom-app-bar {
-    min-height: 72px !important;
-  }
-  .custom-app-bar .v-toolbar-title {
-    line-height: 1.2;
-  }
-  .v-toolbar-title {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-  }
+  
   .back-button {
     align-self: flex-start;
     margin-left: 20%;
