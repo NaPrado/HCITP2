@@ -222,6 +222,7 @@ import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
 import { AccountApi } from "../api/account";
+import { UserApi } from "../api/user";
 
 const router = useRouter();
 
@@ -232,6 +233,7 @@ const mostrarCvu = ref(false);
 const mostrarAlias = ref(false);
 const editandoAlias = ref(false);
 const nuevoAlias = ref("");
+const userName = ref("");
 
 function formatBalance(amount: number) {
   return amount.toLocaleString("es-AR", {
@@ -245,13 +247,25 @@ const formattedBalance = computed(() => formatBalance(balance.value));
 
 onMounted(async () => {
   try {
-    const response = await AccountApi.get();
-    balance.value = response?.balance ?? 0;
-    cvu.value = response?.cvu ?? "";
-    alias.value = response?.alias ?? "";
-    console.log(response);
+    // Cargar información de la cuenta
+    const accountResponse = await AccountApi.get();
+    balance.value = accountResponse?.balance ?? 0;
+    cvu.value = accountResponse?.cvu ?? "";
+    alias.value = accountResponse?.alias ?? "";
+
+    // Cargar información del usuario
+    const userResponse = await UserApi.get();
+    if (userResponse && userResponse.firstName) {
+      const fullName = userResponse.firstName;
+      userName.value = fullName;
+    } else {
+      userName.value = 'Usuario';
+    }
   } catch (e) {
-    console.error("Error al obtener datos de la cuenta:", e);
+    console.error("Error al obtener datos:", e);
+    if (e.code === 97 && e.description === 'Unauthorized.') {
+      router.push('/login');
+    }
   }
 });
 
