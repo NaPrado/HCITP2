@@ -9,47 +9,66 @@
         class="d-flex flex-column align-center justify-center main-content"
       >
         <v-container class="dashboard-upper-card bg-grey-lighten-2">
-          <!-- Tarjeta de monto -->
+          <!-- Tarjeta Saldo + Botón CVU alineados -->
           <v-container
-            class="monto-card dashboard-balance mb-6 bg-green-lighten-1"
+            class="d-flex align-center justify-space-between monto-card dashboard-balance mb-6 bg-green-lighten-1"
+            style="padding: 16px"
           >
-            <v-container
-              class="text-h4 font-weight-bold text-grey-lighten-4 pa-0"
-              >Saldo</v-container
-            >
-            <v-container
-              class="text-h6 font-weight-bold text-grey-lighten-4 pa-0"
-              >{{ formattedBalance }}</v-container
-            >
+            <div>
+              <div class="text-h5 font-weight-bold text-grey-lighten-4">
+                Saldo
+              </div>
+              <div class="text-h6 font-weight-bold text-grey-lighten-4">
+                {{ formattedBalance }}
+              </div>
+            </div>
           </v-container>
-          <!-- Tarjeta de movimientos -->
+
+          <!-- Accesos rápidos -->
           <v-container
-            class="movimientos-link d-flex align-center pa-0"
-            @click="onMovimientosClick"
-            style="cursor: pointer"
+            class="d-flex align-center justify-space-between px-4"
+            style="width: 100%; margin-bottom: 16px"
           >
-            <v-hover>
-              <template v-slot:default="{ isHovering, props }">
-                <span
-                  v-bind="props"
-                  :class="
-                    isHovering ? 'text-green-lighten-1' : 'text-grey-darken-3'
-                  "
-                  class="font-weight-bold"
-                  >Ver Movimientos</span
-                >
-                <v-icon
-                  size="20"
-                  v-bind="props"
-                  :class="
-                    isHovering ? 'text-green-lighten-1' : 'text-grey-darken-3'
-                  "
-                  >mdi-chevron-right</v-icon
-                >
-              </template>
-            </v-hover>
+            <!-- Link a movimientos -->
+            <div
+              class="movimientos-link d-flex align-center"
+              @click="onMovimientosClick"
+              style="cursor: pointer"
+            >
+              <v-hover>
+                <template v-slot:default="{ isHovering, props }">
+                  <span
+                    v-bind="props"
+                    :class="
+                      isHovering ? 'text-green-lighten-1' : 'text-grey-darken-3'
+                    "
+                    class="font-weight-bold"
+                    >Ver Movimientos</span
+                  >
+                  <v-icon
+                    size="20"
+                    v-bind="props"
+                    :class="
+                      isHovering ? 'text-green-lighten-1' : 'text-grey-darken-3'
+                    "
+                    >mdi-chevron-right</v-icon
+                  >
+                </template>
+              </v-hover>
+            </div>
+            <!-- Botón para ver CVU -->
+            <v-btn
+              class="quick-access-btn modern-cvu-btn"
+              @click="mostrarCvu = true"
+              color="green-lighten-1"
+              variant="elevated"
+            >
+              <v-icon left class="mr-2">mdi-numeric</v-icon>
+              Ver CVU
+            </v-btn>
           </v-container>
         </v-container>
+
         <!-- Acciones -->
         <v-container
           class="dashboard-lower-card d-flex flex-column align-center justify-center main-content"
@@ -68,36 +87,157 @@
                 style="border-radius: 50% !important; aspect-ratio: 1"
                 @click="handleActionClick(action.action)"
               >
-                <v-icon :color="action.color" size="32">{{
-                  action.icon
-                }}</v-icon>
+                <v-icon :color="action.color" size="32">
+                  {{ action.icon }}
+                </v-icon>
               </v-btn>
-              <v-container class="text-grey-darken-3 font-weight-bold"
-                >{{ action.label1 }}<br />{{ action.label2 }}</v-container
-              >
+              <v-container class="text-grey-darken-3 font-weight-bold">
+                {{ action.label1 }}<br />{{ action.label2 }}
+              </v-container>
             </v-col>
           </v-row>
         </v-container>
       </v-container>
+
+      <v-dialog v-model="mostrarCvu" max-width="480">
+        <v-card class="dialog-cvu-card">
+          <v-card-title
+            class="text-h5 font-weight-bold text-center py-6 bg-green-lighten-1 text-white d-flex align-center justify-space-between px-6"
+          >
+            <v-icon color="white" size="24">mdi-account-cash</v-icon>
+            <span>Datos de tu cuenta</span>
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              color="white"
+              size="small"
+              @click="mostrarCvu = false"
+            ></v-btn>
+          </v-card-title>
+
+          <v-card-text class="pa-6">
+            <!-- Sección CVU -->
+            <div class="dialog-section">
+              <div class="dialog-label">
+                <v-icon size="18" color="green-lighten-1" class="mr-2"
+                  >mdi-numeric</v-icon
+                >
+                CVU
+              </div>
+              <div class="dialog-value-container">
+                <span class="dialog-value">{{ cvu || "Cargando..." }}</span>
+                <v-btn
+                  variant="tonal"
+                  color="green-lighten-1"
+                  size="small"
+                  class="ml-2 copy-btn"
+                  @click="copiarCvu"
+                >
+                  <v-icon size="18" class="mr-1">mdi-content-copy</v-icon>
+                  Copiar
+                </v-btn>
+              </div>
+            </div>
+
+            <!-- Sección Alias -->
+            <div class="dialog-section mt-4">
+              <div class="dialog-label">
+                <v-icon size="18" color="green-lighten-1" class="mr-2"
+                  >mdi-at</v-icon
+                >
+                Alias
+              </div>
+              <div class="dialog-value-container">
+                <template v-if="!editandoAlias">
+                  <span class="dialog-value">{{ alias || "Cargando..." }}</span>
+                  <v-btn
+                    variant="tonal"
+                    color="green-lighten-1"
+                    size="small"
+                    class="ml-2 edit-btn"
+                    @click="empezarEditarAlias"
+                  >
+                    <v-icon size="18" class="mr-1">mdi-pencil</v-icon>
+                    Editar
+                  </v-btn>
+                </template>
+                <template v-else>
+                  <div class="alias-edit-container">
+                    <v-text-field
+                      v-model="nuevoAlias"
+                      variant="outlined"
+                      density="comfortable"
+                      hide-details
+                      placeholder="Ingresa tu nuevo alias"
+                      class="alias-input"
+                      color="green-lighten-1"
+                      bg-color="white"
+                    />
+                    <div class="alias-actions mt-2">
+                      <v-btn
+                        variant="tonal"
+                        color="green-lighten-1"
+                        size="small"
+                        class="mr-2"
+                        @click="guardarAlias"
+                      >
+                        <v-icon size="18" class="mr-1">mdi-content-save</v-icon>
+                        Guardar
+                      </v-btn>
+                      <v-btn
+                        variant="outlined"
+                        color="grey"
+                        size="small"
+                        @click="cancelarEditarAlias"
+                      >
+                        <v-icon size="18" class="mr-1">mdi-close</v-icon>
+                        Cancelar
+                      </v-btn>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </v-card-text>
+
+          <v-card-actions class="justify-end px-6 pb-6">
+            <v-btn
+              block
+              variant="tonal"
+              color="green-lighten-1"
+              @click="mostrarCvu = false"
+              class="close-btn"
+            >
+              Cerrar
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-container>
   </v-app>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
-import { UserApi } from "../api/user.js";
-import { ref, onMounted, computed } from "vue";
+import { AccountApi } from "../api/account";
 
 const router = useRouter();
-const userName = ref("");
+
 const balance = ref(0);
+const cvu = ref("");
+const alias = ref("");
+const mostrarCvu = ref(false);
+const mostrarAlias = ref(false);
+const editandoAlias = ref(false);
+const nuevoAlias = ref("");
 
 function formatBalance(amount: number) {
-  return amount.toLocaleString('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 2
+  return amount.toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
   });
 }
 
@@ -105,13 +245,41 @@ const formattedBalance = computed(() => formatBalance(balance.value));
 
 onMounted(async () => {
   try {
-    const user = await UserApi.get();
-    userName.value = user.firstName;
-    balance.value = user.balance || 0;
-  } catch (error) {
-    console.error("Error al obtener datos del usuario:", error);
+    const response = await AccountApi.get();
+    balance.value = response?.balance ?? 0;
+    cvu.value = response?.cvu ?? "";
+    alias.value = response?.alias ?? "";
+    console.log(response);
+  } catch (e) {
+    console.error("Error al obtener datos de la cuenta:", e);
   }
 });
+
+function copiarCvu() {
+  if (cvu.value) {
+    navigator.clipboard.writeText(cvu.value);
+  }
+}
+
+function empezarEditarAlias() {
+  nuevoAlias.value = alias.value;
+  editandoAlias.value = true;
+}
+
+function cancelarEditarAlias() {
+  editandoAlias.value = false;
+  nuevoAlias.value = "";
+}
+
+async function guardarAlias() {
+  try {
+    await AccountApi.updateAlias({ alias: nuevoAlias.value });
+    alias.value = nuevoAlias.value;
+    editandoAlias.value = false;
+  } catch (e) {
+    alert("Error al actualizar el alias");
+  }
+}
 
 const actions = [
   {
@@ -259,16 +427,12 @@ function onMovimientosClick() {
   color: #484554 !important;
   border-radius: 0;
   box-shadow: none;
-  padding: 0 8px;
   height: auto;
   display: flex;
   align-items: center;
   font-weight: bold;
   font-size: 1.1rem;
   transition: color 0.2s;
-  margin-left: 24px;
-  justify-content: flex-start;
-  margin-bottom: 10px;
 }
 .movimientos-text {
   font-weight: bold;
@@ -287,11 +451,116 @@ function onMovimientosClick() {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
-</style>
 
-<style>
-html,
-body,
+.quick-access-row {
+  margin-left: 24px;
+  margin-bottom: 10px;
+  gap: 16px;
+}
+.quick-access-btn {
+  min-width: 0 !important;
+  padding: 0 12px !important;
+  font-weight: bold;
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: 0.5px;
+}
+.modern-cvu-btn {
+  font-weight: bold;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  text-transform: none;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  height: 40px;
+}
+
+.modern-cvu-btn:hover {
+  transform: translateY(-2px);
+}
+
+.dialog-cvu-card {
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: #ffffff;
+  box-shadow: 0 6px 24px rgba(56, 142, 60, 0.15) !important;
+}
+
+.dialog-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dialog-label {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 0.95rem;
+  color: #2e7d32;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dialog-value-container {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dialog-value {
+  font-size: 1.1rem;
+  color: #333;
+  font-weight: 500;
+  word-break: break-word;
+  background-color: #ffffff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  flex-grow: 1;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+.copy-btn,
+.edit-btn {
+  transition: all 0.2s ease;
+  height: 48px !important;
+}
+
+.copy-btn:hover,
+.edit-btn:hover {
+  transform: translateY(-2px);
+}
+
+.alias-edit-container {
+  width: 100%;
+}
+
+.alias-input {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.alias-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.close-btn {
+  margin-top: 8px;
+  height: 48px;
+}
+
+html body,
 #app {
   height: 100%;
   margin: 0;

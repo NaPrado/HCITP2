@@ -67,7 +67,10 @@
 import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
+import { AccountApi } from "../api/account";
 
+const snackbar = ref(false);
+const mensajeError = ref("");
 const router = useRouter();
 const route = useRoute();
 
@@ -103,9 +106,22 @@ function onVolverClick() {
   router.push("./DepositPage");
 }
 
-function onCrearClick() {
-  // lógica para finalizar el depósito
-  router.push("./HomePage");
+async function onCrearClick() {
+  try {
+    // Llama a la API para recargar saldo
+    const response = await AccountApi.recharge({
+      amount: monto_ingresado.value,
+    });
+    // Opcional: podés mostrar el nuevo saldo o actualizarlo en un store/reactivo
+    // balance.value = response.balance; // si usás balance en este componente
+    // Redirige al HomePage o muestra mensaje de éxito
+    router.push("./HomePage");
+  } catch (e) {
+    const err = e as any;
+    mensajeError.value =
+      err.description || err.message || "Error al recargar saldo";
+    snackbar.value = true;
+  }
 }
 </script>
 

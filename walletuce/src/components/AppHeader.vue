@@ -109,7 +109,7 @@ async function onCerrarSesion() {
   Api.token = null;
   localStorage.removeItem("auth");
   localStorage.removeItem("token");
-  router.push("/LandingPage");
+  router.push("/login");
 }
 
 function onAyudaClick() {

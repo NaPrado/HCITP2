@@ -68,9 +68,8 @@ async function login() {
     const response = await UserApi.login(creds);
     console.log("Respuesta login:", response);
     if (response.token) {
-      Api.token = response.token;
+      Api.token = response.token; // Esto ya lo guarda en localStorage
       localStorage.setItem("auth", "true");
-      localStorage.setItem("token", response.token);
       router.push("/HomePage");
     } else {
       alert("Credenciales incorrectas");
