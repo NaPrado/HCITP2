@@ -135,10 +135,7 @@
 
                   <v-select
                     v-model="nuevaTarjeta.type"
-                    :items="[
-                      { value: 'CREDIT', text: 'Crédito' },
-                      { value: 'DEBIT', text: 'Débito' }
-                    ]"
+                    :items="CARD_TYPES"
                     item-title="text"
                     item-value="value"
                     label="Tipo de tarjeta"
@@ -218,11 +215,11 @@
   import { useRouter } from 'vue-router'
   import { ref, computed, onMounted, watch } from 'vue';
   import AppHeader from "../components/AppHeader.vue";
-  import { CardApi, Card } from "../api/card.js";
+  import { CardsService, formatCardNumber, cleanCardNumber, formatDisplayNumber, formatCardType, CARD_TYPES } from "../api/cards.js";
   import { Api } from "../api/api.js";
   
   const router = useRouter()
-  const tarjetaSeleccionada = ref<number | null>(null);
+  const tarjetaSeleccionada = ref(null);
   const mostrarDialogoEliminar = ref(false);
   const mostrarConfirmacionFinal = ref(false);
   const mostrarDialogoAgregar = ref(false);
@@ -261,22 +258,52 @@
     }
 
     try {
-      const cards = await CardApi.getAll();
-      if (Array.isArray(cards)) {
-        tarjetas.value = cards.map(card => ({
+      cargando.value = true;
+      console.log('Iniciando carga de tarjetas...');
+      const response = await CardsService.getAll();
+      console.log('Respuesta completa:', response);
+
+      // Si la respuesta es un array directamente
+      if (Array.isArray(response)) {
+        console.log('Respuesta es un array');
+        tarjetas.value = response.map(card => ({
           banco: card.fullName,
-          tipo: card.type === 'CREDIT' ? 'Crédito' : 'Débito',
-          numero: `**** **** **** ${card.number.slice(-4)}`,
+          tipo: formatCardType(card.type),
+          numero: formatDisplayNumber(card.number),
           id: card.id
         }));
-      } else {
+      }
+      // Si la respuesta tiene una propiedad 'cards'
+      else if (response && Array.isArray(response.cards)) {
+        console.log('Respuesta tiene propiedad cards');
+        tarjetas.value = response.cards.map(card => ({
+          banco: card.fullName,
+          tipo: formatCardType(card.type),
+          numero: formatDisplayNumber(card.number),
+          id: card.id
+        }));
+      }
+      // Si la respuesta tiene una propiedad 'result'
+      else if (response && Array.isArray(response.result)) {
+        console.log('Respuesta tiene propiedad result');
+        tarjetas.value = response.result.map(card => ({
+          banco: card.fullName,
+          tipo: formatCardType(card.type),
+          numero: formatDisplayNumber(card.number),
+          id: card.id
+        }));
+      }
+      else {
+        console.log('No se encontró un formato válido en la respuesta');
         tarjetas.value = [];
+        error.value = 'Formato de respuesta no válido';
       }
     } catch (e) {
-      console.error('Error al cargar tarjetas:', e);
+      console.error('Error completo al cargar tarjetas:', e);
       if (e.code === 97 && e.description === 'Unauthorized.') {
         router.push('/login');
       } else {
+        error.value = e.description || 'Error al cargar las tarjetas';
         tarjetas.value = [];
       }
     } finally {
@@ -286,19 +313,6 @@
 
   function onVolverClick() {
     router.back()
-  }
-
-  // Función para formatear el número de tarjeta
-  function formatCardNumber(value: string): string {
-    if (!value) return '';
-    const cleaned = value.replace(/\s/g, '');
-    const groups = cleaned.match(/.{1,4}/g);
-    return groups ? groups.join(' ') : cleaned;
-  }
-
-  // Función para limpiar el número de tarjeta
-  function cleanCardNumber(value: string): string {
-    return value.replace(/\s/g, '');
   }
 
   // Watch para formatear el número mientras se escribe
@@ -323,21 +337,21 @@
       }
 
       const cleanedNumber = cleanCardNumber(nuevaTarjeta.value.number);
-      const nuevaCard = new Card(
-        null,
-        nuevaTarjeta.value.fullName,
-        nuevaTarjeta.value.cvv,
-        cleanedNumber,
-        nuevaTarjeta.value.expirationDate,
-        nuevaTarjeta.value.type
-      );
+      const cardData = {
+        fullName: nuevaTarjeta.value.fullName,
+        number: cleanedNumber,
+        cvv: nuevaTarjeta.value.cvv,
+        expirationDate: nuevaTarjeta.value.expirationDate,
+        type: nuevaTarjeta.value.type
+      };
 
-      const cardCreada = await CardApi.add(nuevaCard);
+      const response = await CardsService.add(cardData);
+      const cardCreada = response.card;
       
       tarjetas.value.push({
         banco: cardCreada.fullName,
-        tipo: cardCreada.type === 'CREDIT' ? 'Crédito' : 'Débito',
-        numero: `**** **** **** ${cardCreada.number.slice(-4)}`,
+        tipo: formatCardType(cardCreada.type),
+        numero: formatDisplayNumber(cardCreada.number),
         id: cardCreada.id
       });
 
@@ -372,7 +386,7 @@
     if (tarjetaSeleccionada.value !== null) {
       const tarjeta = tarjetas.value[tarjetaSeleccionada.value];
       try {
-        await CardApi.remove(tarjeta.id);
+        await CardsService.remove(tarjeta.id);
         tarjetas.value.splice(tarjetaSeleccionada.value, 1);
         tarjetaSeleccionada.value = null;
         mostrarDialogoEliminar.value = false;
