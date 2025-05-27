@@ -63,7 +63,7 @@
               color="green-lighten-1"
               variant="elevated"
             >
-              <v-icon left class="mr-2">mdi-numeric</v-icon>
+              <v-icon left class="mr-2">mdi-file-document</v-icon>
               Ver CVU
             </v-btn>
           </v-container>
@@ -259,12 +259,12 @@ onMounted(async () => {
       const fullName = userResponse.firstName;
       userName.value = fullName;
     } else {
-      userName.value = 'Usuario';
+      userName.value = "Usuario";
     }
   } catch (e) {
     console.error("Error al obtener datos:", e);
-    if (e.code === 97 && e.description === 'Unauthorized.') {
-      router.push('/login');
+    if (e.code === 97 && e.description === "Unauthorized.") {
+      router.push("/login");
     }
   }
 });

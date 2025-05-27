@@ -16,15 +16,11 @@
       <v-container
         class="d-flex flex-column align-center justify-center main-content pt-10"
       >
-        <v-btn
+        <BackButton
+          to="/HomePage"
           variant="text"
-          color="black"
-          @click="onVolverClick"
-          class="back-button pl-1"
-        >
-          <v-icon start>mdi-arrow-left</v-icon>
-          Volver
-        </v-btn>
+          class="align-self-start ml-4 mt-4"
+        />
         <v-card class="pa-6 container-card bg-grey-lighten-2" rounded="lg">
           <!-- Monto -->
           <v-card
@@ -66,6 +62,22 @@
                 color="green-lighten-1"
               />
             </v-radio-group>
+            <!-- Selector de tarjeta si se elige tarjeta como método -->
+            <v-select
+              v-if="origen === 'tarjeta'"
+              v-model="selectedCard"
+              :items="cards"
+              item-title="displayName"
+              item-value="id"
+              label="Seleccione una tarjeta"
+              class="mt-2 compact-select"
+              :loading="loadingCards"
+              :disabled="loadingCards"
+              :error-messages="errorTarjeta"
+              density="compact"
+              variant="outlined"
+              hide-details
+            ></v-select>
           </v-card>
 
           <!-- Botones -->
@@ -86,16 +98,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
+import BackButton from "../components/BackButton.vue";
+import { CardApi } from "../api/card.js";
+import { Api } from "../api/api.js";
+import { onMounted } from "vue";
 
 const router = useRouter();
 const snackbar = ref(false);
 const mensajeError = ref("");
 
 const monto = ref("");
-const origen = ref("tarjeta"); // valor inicial seleccionado
+
+const origen = ref("tarjeta"); // o el valor que prefieras por defecto
+const selectedCard = ref(null);
+const cards = ref([]);
+const loadingCards = ref(false);
+const errorTarjeta = ref("");
+
+// Cargar tarjetas cuando se selecciona "tarjeta" como origen
+watch(origen, async (newValue) => {
+  if (newValue === "tarjeta") {
+    await loadCards();
+  }
+});
+
+onMounted(() => {
+  loadCards();
+});
+
+async function loadCards() {
+  loadingCards.value = true;
+  try {
+    const response = await CardApi.getAll();
+    console.log(response);
+    if (Array.isArray(response)) {
+      cards.value = response.map((card) => ({
+        displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
+        id: card.id,
+      }));
+    } else if (response && Array.isArray(response.cards)) {
+      cards.value = response.cards.map((card) => ({
+        displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
+        id: card.id,
+      }));
+    }
+  } catch (e) {
+    errorTarjeta.value = "Error al cargar las tarjetas";
+  } finally {
+    loadingCards.value = false;
+  }
+}
 
 function onVolverClick() {
   router.push("./HomePage");
@@ -108,17 +163,21 @@ function onCrearClick() {
     snackbar.value = true;
     return;
   }
-
+  if (origen.value === "tarjeta" && !selectedCard.value) {
+    mensajeError.value = "Seleccioná una tarjeta";
+    snackbar.value = true;
+    return;
+  }
   router.push({
     path: "./ConfirmDeposit",
     query: {
       monto: monto.value,
       origen: origen.value,
+      cardId: selectedCard.value,
     },
   });
 }
 </script>
-
 <style scoped>
 .main-bg {
   background: #eee !important;

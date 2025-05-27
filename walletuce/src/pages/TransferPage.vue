@@ -6,6 +6,11 @@
       <v-container
         class="d-flex flex-column align-center justify-center main-content"
       >
+        <BackButton
+          to="/HomePage"
+          variant="text"
+          class="align-self-start ml-4 mt-4"
+        />
         <v-container class="dashboard-upper-card bg-grey-lighten-2">
           <v-form @submit.prevent="onSubmit" class="w-100 px-4 py-6">
             <!-- Paso 1: Elegir destinatario -->
@@ -118,6 +123,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
+import BackButton from "../components/BackButton.vue";
 
 const router = useRouter();
 

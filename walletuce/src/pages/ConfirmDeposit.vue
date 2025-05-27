@@ -8,16 +8,11 @@
       <v-container
         class="d-flex flex-column align-center justify-center main-content pt-4"
       >
-        <v-btn
+        <BackButton
+          to="/DepositPage"
           variant="text"
-          color="black"
-          @click="onVolverClick"
-          class="back-button pl-1"
-        >
-          <v-icon start>mdi-arrow-left</v-icon>
-          Volver
-        </v-btn>
-
+          class="align-self-start ml-4 mt-4"
+        />
         <v-card class="pa-6 container-card bg-grey-lighten-2" rounded="lg">
           <!-- Monto ingresado -->
           <v-card
@@ -67,6 +62,7 @@
 import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
+import BackButton from "../components/BackButton.vue";
 import { AccountApi } from "../api/account";
 
 const snackbar = ref(false);
