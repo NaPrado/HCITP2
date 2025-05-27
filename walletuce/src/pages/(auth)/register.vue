@@ -33,16 +33,13 @@
         <div class="input-pair">
           <div>
             <label for="birthDate">Fecha de nacimiento</label>
-            <div class="datepicker-wrapper">
-              <Datepicker
-                id="birthDate"
-                v-model="birthDate"
-                :format="'dd/MM/yyyy'"
-                :enable-time-picker="false"
-                auto-apply
-                placeholder="Seleccionar fecha"
-              />
-            </div>
+            <input
+              id="birthDate"
+              type="text"
+              v-model="birthDate"
+              placeholder="dd/mm/yyyy"
+              required
+            />
           </div>
 
           <div>
@@ -94,14 +91,13 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import Datepicker from "vue3-datepicker";
 import { UserApi } from "@/api/user.js";
 
 const router = useRouter();
 
 const firstName = ref("");
 const lastName = ref("");
-const birthDate = ref(null);
+const birthDate = ref("");
 const phone = ref("");
 const email = ref("");
 const password = ref("");
@@ -109,10 +105,40 @@ const loading = ref(false);
 
 async function register() {
   loading.value = true;
+
+  // Parse dd/mm/yyyy to YYYY-MM-DD format for the API
+  let formattedBirthDate = "";
+  const dateParts = birthDate.value.split('/');
+  if (dateParts.length === 3) {
+    const day = dateParts[0];
+    const month = dateParts[1];
+    const year = dateParts[2];
+    // Basic validation: ensure parts are numbers and month/day are within reasonable range
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+       formattedBirthDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    } else {
+      alert("Formato de fecha inválido. Utiliza dd/mm/yyyy.");
+      loading.value = false;
+      return; // Stop registration if format is invalid
+    }
+  } else if (birthDate.value !== "") {
+     alert("Formato de fecha inválido. Utiliza dd/mm/yyyy.");
+     loading.value = false;
+     return; // Stop registration if format is invalid
+  }
+
+  // Validate phone number: 6 to 15 digits
+  const phoneRegex = /^\d{6,15}$/;
+  if (!phoneRegex.test(phone.value)) {
+    alert("Número de teléfono inválido.");
+    loading.value = false;
+    return; // Stop registration if phone is invalid
+  }
+
   const newUser = {
     firstName: firstName.value,
     lastName: lastName.value,
-    birthDate: birthDate.value?.toISOString().split("T")[0] || "",
+    birthDate: formattedBirthDate, // Use the formatted date
     email: email.value,
     password: password.value,
     metadata: {},
@@ -234,39 +260,6 @@ button:hover {
   color: #1b5e20;
 }
 
-/* Ajustes del datepicker */
-.datepicker-wrapper {
-  display: flex;
-  align-items: center;
-  height: 46px;
-}
+/* Remove all Datepicker specific styles */
 
-/* Input del Datepicker */
-:deep(.dp__input) {
-  width: 100%;
-  padding: 12px 14px;
-  border: 2px solid #c8e6c9; /* Igual que inputs normales */
-  border-radius: 8px;
-  font-size: 1rem;
-  color: #222 !important; /* Texto negro siempre */
-  background-color: #f9f9f9;
-  transition: all 0.2s ease-in-out;
-  height: 46px;
-  box-sizing: border-box;
-}
-
-/* Borde y sombra al enfocar */
-:deep(.dp__input:focus) {
-  outline: none;
-  border-color: #66bb6a !important; /* Verde como inputs normales */
-  background-color: #fff;
-  box-shadow: 0 0 0 2px #a5d6a7 !important;
-}
-
-/* Contenedor principal del calendario */
-:deep(.dp__main) {
-  background-color: transparent;
-  border: none;
-  padding: 0;
-}
 </style>
