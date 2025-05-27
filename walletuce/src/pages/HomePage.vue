@@ -263,7 +263,14 @@ onMounted(async () => {
     }
   } catch (e) {
     console.error("Error al obtener datos:", e);
-    if (e.code === 97 && e.description === "Unauthorized.") {
+    if (
+      typeof e === "object" &&
+      e !== null &&
+      "code" in e &&
+      "description" in e &&
+      (e as any).code === 97 &&
+      (e as any).description === "Unauthorized."
+    ) {
       router.push("/login");
     }
   }

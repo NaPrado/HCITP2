@@ -114,7 +114,7 @@ const monto = ref("");
 
 const origen = ref("tarjeta"); // o el valor que prefieras por defecto
 const selectedCard = ref(null);
-const cards = ref([]);
+const cards = ref<{ displayName: string; id: string }[]>([]);
 const loadingCards = ref(false);
 const errorTarjeta = ref("");
 
@@ -129,24 +129,54 @@ onMounted(() => {
   loadCards();
 });
 
+type Card = {
+  fullName: string;
+  number: string;
+  id: string;
+};
+
+type CardApiResponse =
+  | Card[]
+  | { cards: Card[] }
+  | { result: Card[] }
+  | undefined
+  | null;
+
 async function loadCards() {
   loadingCards.value = true;
   try {
-    const response = await CardApi.getAll();
+    const response = (await CardApi.getAll()) as CardApiResponse;
     console.log(response);
     if (Array.isArray(response)) {
       cards.value = response.map((card) => ({
         displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
         id: card.id,
       }));
-    } else if (response && Array.isArray(response.cards)) {
+    } else if (
+      response &&
+      "cards" in response &&
+      Array.isArray(response.cards)
+    ) {
       cards.value = response.cards.map((card) => ({
         displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
         id: card.id,
       }));
+    } else if (
+      response &&
+      "result" in response &&
+      Array.isArray(response.result)
+    ) {
+      cards.value = response.result.map((card) => ({
+        displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
+        id: card.id,
+      }));
+    } else {
+      // Si no hay tarjetas o el formato es inesperado, dejá el array vacío
+      cards.value = [];
     }
   } catch (e) {
     errorTarjeta.value = "Error al cargar las tarjetas";
+    cards.value = [];
   } finally {
     loadingCards.value = false;
   }

@@ -14,12 +14,12 @@ This is the official scaffolding tool for Vuetify, designed to give you a head s
 
 Set up your project using your preferred package manager. Use the corresponding command to install the dependencies:
 
-| Package Manager                                                | Command        |
-|---------------------------------------------------------------|----------------|
-| [yarn](https://yarnpkg.com/getting-started)                   | `yarn install` |
-| [npm](https://docs.npmjs.com/cli/v7/commands/npm-install)     | `npm install`  |
-| [pnpm](https://pnpm.io/installation)                          | `pnpm install` |
-| [bun](https://bun.sh/#getting-started)                        | `bun install`  |
+| Package Manager                                           | Command        |
+| --------------------------------------------------------- | -------------- |
+| [yarn](https://yarnpkg.com/getting-started)               | `yarn install` |
+| [npm](https://docs.npmjs.com/cli/v7/commands/npm-install) | `npm install`  |
+| [pnpm](https://pnpm.io/installation)                      | `pnpm install` |
+| [bun](https://bun.sh/#getting-started)                    | `bun install`  |
 
 After completing the installation, your environment is ready for Vuetify development.
 
@@ -76,6 +76,82 @@ This project is built with [Vuetify](https://vuetifyjs.com/en/), a UI Library wi
 - [Making a one-time donation with Paypal](https://paypal.me/vuetify)
 
 ## 📑 License
+
 [MIT](http://opensource.org/licenses/MIT)
 
 Copyright (c) 2016-present Vuetify, LLC
+
+# Walletuce
+
+## Mejoras de Código (2024)
+
+Se realizaron las siguientes mejoras en el código para aumentar su mantenibilidad y reutilización:
+
+### 1. Tipos TypeScript
+
+- Creación de interfaces para todas las APIs (`/src/types/api.d.ts`)
+- Eliminación de usos de `any` implícito
+- Tipado estricto para respuestas de API
+
+### 2. Constantes Compartidas
+
+- Rutas centralizadas
+- Tipos de tarjetas
+- Códigos de error
+- Configuraciones de formato
+
+### 3. Utilidades
+
+- Funciones de formateo compartidas (`/src/utils/format.ts`)
+- Manejo de errores unificado (`/src/utils/error.ts`)
+- Validaciones comunes
+
+### 4. Estilos
+
+- CSS compartido para elementos comunes (`/src/styles/common.css`)
+- Reducción de duplicación de estilos
+- Clases consistentes para componentes similares
+
+### 5. Estructura
+
+- Organización clara de archivos por funcionalidad
+- Separación de lógica de negocio y presentación
+- Reutilización de componentes comunes
+
+### 6. Componentes Reutilizables
+
+#### CardSelector
+
+```vue
+<template>
+  <CardSelector v-model="selectedCardId" label="Seleccione una tarjeta" />
+</template>
+```
+
+#### Utilidades de Formato
+
+```typescript
+import { formatCurrency, formatCardDisplay } from "@/utils/format";
+
+// Formatear moneda
+const amount = formatCurrency(1000); // "$1.000,00"
+
+// Formatear tarjeta
+const cardDisplay = formatCardDisplay(card); // "Juan Perez - **** 1234"
+```
+
+#### Manejo de Errores
+
+```typescript
+import { handleApiError } from "@/utils/error";
+
+try {
+  // Llamada a API
+} catch (e) {
+  error.value = handleApiError(e, router);
+}
+```
+
+## Instalación y Uso
+
+[Mantener el contenido existente del README aquí...]

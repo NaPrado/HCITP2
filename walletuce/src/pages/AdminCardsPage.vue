@@ -315,7 +315,9 @@ onMounted(async () => {
 
   try {
     cargando.value = true;
-    const response = await CardApi.getAll();
+    // Define a more accurate type for the response
+    type CardApiResponse = any[] | { cards?: any[] } | { result?: any[] };
+    const response: CardApiResponse = await CardApi.getAll();
     if (Array.isArray(response)) {
       tarjetas.value = response.map((card) => ({
         banco: card.fullName,
@@ -323,14 +325,22 @@ onMounted(async () => {
         numero: formatDisplayNumber(card.number),
         id: card.id,
       }));
-    } else if (response && Array.isArray(response.cards)) {
+    } else if (
+      response &&
+      "cards" in response &&
+      Array.isArray(response.cards)
+    ) {
       tarjetas.value = response.cards.map((card) => ({
         banco: card.fullName,
         tipo: formatCardType(card.type),
         numero: formatDisplayNumber(card.number),
         id: card.id,
       }));
-    } else if (response && Array.isArray(response.result)) {
+    } else if (
+      response &&
+      "result" in response &&
+      Array.isArray(response.result)
+    ) {
       tarjetas.value = response.result.map((card) => ({
         banco: card.fullName,
         tipo: formatCardType(card.type),
@@ -382,10 +392,23 @@ async function agregarTarjeta() {
       number: cleanedNumber,
       cvv: nuevaTarjeta.value.cvv,
       expirationDate: nuevaTarjeta.value.expirationDate,
-      type: nuevaTarjeta.value.type,
+      type: nuevaTarjeta.value.type as "CREDIT" | "DEBIT",
     };
     const response = await CardApi.add(cardData);
-    const cardCreada = response.card || response;
+    const cardCreada =
+      response && typeof response === "object" && "card" in response
+        ? (response.card as {
+            fullName: string;
+            type: string;
+            number: string;
+            id: any;
+          })
+        : (response as {
+            fullName: string;
+            type: string;
+            number: string;
+            id: any;
+          });
     tarjetas.value.push({
       banco: cardCreada.fullName,
       tipo: formatCardType(cardCreada.type),

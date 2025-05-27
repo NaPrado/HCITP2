@@ -86,35 +86,47 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { Api } from "../api/api";
+import type { Api } from "../api/api";
+import { Api as ApiImpl } from "../api/api";
 import { UserApi } from "../api/user";
+import { ROUTES } from "../constants";
 
 const router = useRouter();
 
-defineProps<{ titulo: string }>();
+defineProps<{
+  titulo: string;
+}>();
 
 const hovering = ref(false);
 const menuVisible = ref(false);
 
 function onVerPerfil() {
   menuVisible.value = false;
-  router.push("/profile"); // Ajustá a tu ruta real
+  router.push(ROUTES.PROFILE);
 }
 
 async function onCerrarSesion() {
   menuVisible.value = false;
   try {
     await UserApi.logout();
-  } catch (e) {}
-  Api.token = null;
+  } catch (error: unknown) {
+    console.error("Error al cerrar sesión:", error);
+  }
+  ApiImpl.token = null;
   localStorage.removeItem("auth");
   localStorage.removeItem("token");
-  router.push("/login");
+  router.push(ROUTES.LOGIN);
 }
 
 function onAyudaClick() {
-  router.push("/help");
+  router.push(ROUTES.HELP);
 }
+</script>
+
+<script lang="ts">
+export default {
+  name: "AppHeader",
+};
 </script>
 
 <style scoped>
