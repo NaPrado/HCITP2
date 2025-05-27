@@ -1,7 +1,13 @@
 <template>
   <LettucePatternBackground>
     <div class="register-box">
-      <img src="@/assets/letucce.svg" alt="Letucce Logo" class="logo" />
+      <div class="logo-wrapper" @click="goToLandingPage">
+        <img
+          src="@/assets/letucce.svg"
+          alt="Letucce Logo"
+          class="logo"
+        />
+      </div>
       <h2>Registrarse</h2>
 
       <form @submit.prevent="register" class="form-grid">
@@ -159,6 +165,11 @@ async function register() {
 function goToLogin() {
   router.push("/login");
 }
+
+function goToLandingPage() {
+  router.push("/LandingPage");
+}
+
 </script>
 
 <style scoped>
@@ -170,11 +181,6 @@ function goToLogin() {
   width: 720px;
   max-width: 95vw;
   text-align: center;
-}
-
-.logo {
-  width: 80px;
-  margin-bottom: 20px;
 }
 
 h2 {
@@ -259,6 +265,32 @@ button:hover {
 .login span:hover {
   color: #1b5e20;
 }
+.logo-wrapper {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background-color: transparent;
+  margin: 0 auto 20px auto;
+}
+
+.logo-wrapper:hover {
+  border: 2px solid #4caf50;
+  background-color: #dcedc8;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+
+.logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
 
 /* Remove all Datepicker specific styles */
 

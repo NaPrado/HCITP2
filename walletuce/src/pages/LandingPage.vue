@@ -73,7 +73,7 @@
         <h3 class="mt-2">Contactos</h3>
         <p class="text-body-1 text-grey-darken-2 font-weight-regular mb-0">
           Para cualquier consulta contactenos en
-          <span class="text-green">mcuneogima@itba.edu.ar</span>.
+          <span class="text-green">contacto@walletuce.com</span>.
         </p>
       </v-container>
     </v-footer>

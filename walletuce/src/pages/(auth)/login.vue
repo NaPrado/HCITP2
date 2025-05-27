@@ -2,7 +2,15 @@
   <LettucePatternBackground>
     <div class="login-box">
       <!-- Logo -->
-      <img src="@/assets/letucce.svg" alt="Letucce Logo" class="logo" />
+      <!-- Logo -->
+      <div class="logo-wrapper" @click="goToLandingPage">
+        <img
+          src="@/assets/letucce.svg"
+          alt="Letucce Logo"
+          class="logo"
+        />
+      </div>
+
 
       <h2>Iniciar sesión</h2>
 
@@ -48,6 +56,10 @@ const email = ref("");
 const password = ref("");
 const router = useRouter();
 const loading = ref(false);
+
+function goToLandingPage() {
+  router.push("/LandingPage");
+}
 
 onMounted(() => {
   const token = localStorage.getItem("token");
@@ -187,4 +199,32 @@ button:hover {
 .register span:hover {
   color: #1b5e20;
 }
+.logo-wrapper {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background-color: transparent;
+  margin: 0 auto 20px auto;
+}
+
+.logo-wrapper:hover {
+  border: 2px solid #4caf50;
+  background-color: #dcedc8;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+
+.logo {
+  margin-top:20px;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+}
+
+
 </style>
