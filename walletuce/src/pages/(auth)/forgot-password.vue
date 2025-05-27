@@ -50,12 +50,23 @@ async function resetPassword() {
 function goToLogin() {
   router.push("/login");
 }
+
+function goToLandingPage() {
+  router.push("/LandingPage");
+}
+
 </script>
 
 <template>
   <LettucePatternBackground>
     <div class="register-box">
-      <img src="@/assets/letucce.svg" alt="Letucce Logo" class="logo" />
+      <div class="logo-wrapper" @click="goToLandingPage">
+        <img
+          src="@/assets/letucce.svg"
+          alt="Letucce Logo"
+          class="logo"
+        />
+      </div>
       <h2>Restablecer contraseña</h2>
       <form v-if="step === 1" @submit.prevent="requestReset" class="form-grid">
         <div class="input-single">
@@ -123,10 +134,6 @@ function goToLogin() {
   text-align: center;
 }
 
-.logo {
-  width: 80px;
-  margin-bottom: 20px;
-}
 
 h2 {
   margin-bottom: 24px;
@@ -213,5 +220,30 @@ button:hover {
 
 .login span:hover {
   color: #1b5e20;
+}
+.logo-wrapper {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  background-color: transparent;
+  margin: 0 auto 20px auto;
+}
+
+.logo-wrapper:hover {
+  border: 2px solid #4caf50;
+  background-color: #dcedc8;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+
+.logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
 }
 </style>
