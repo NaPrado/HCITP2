@@ -133,8 +133,8 @@ export class PaymentsService {
   static async transferByEmail(
     email,
     amount,
-    description = "",
-    cardId = null,
+    description = undefined,
+    cardId = undefined,
     controller
   ) {
     try {
@@ -146,7 +146,10 @@ export class PaymentsService {
       }
       url = `${url}?${queryParams.toString()}`;
 
-      const bodyData = { amount: parseFloat(amount), description };
+      const bodyData = {
+        amount: parseFloat(amount),
+        ...(description && { description }),
+      };
       return await Api.post(url, true, bodyData, controller);
     } catch (error) {
       console.error("Error transferring by email:", error);
@@ -158,8 +161,8 @@ export class PaymentsService {
   static async transferByCvu(
     cvu,
     amount,
-    description = "",
-    cardId = null,
+    description = undefined,
+    cardId = undefined,
     controller
   ) {
     try {
@@ -171,7 +174,10 @@ export class PaymentsService {
       }
       url = `${url}?${queryParams.toString()}`;
 
-      const bodyData = { amount: parseFloat(amount), description };
+      const bodyData = {
+        amount: parseFloat(amount),
+        ...(description && { description }),
+      };
       return await Api.post(url, true, bodyData, controller);
     } catch (error) {
       console.error("Error transferring by CVU:", error);
@@ -183,8 +189,8 @@ export class PaymentsService {
   static async transferByAlias(
     alias,
     amount,
-    description = "",
-    cardId = null,
+    description = undefined,
+    cardId = undefined,
     controller
   ) {
     try {
@@ -196,7 +202,10 @@ export class PaymentsService {
       }
       url = `${url}?${queryParams.toString()}`;
 
-      const bodyData = { amount: parseFloat(amount), description };
+      const bodyData = {
+        amount: parseFloat(amount),
+        ...(description && { description }),
+      };
       return await Api.post(url, true, bodyData, controller);
     } catch (error) {
       console.error("Error transferring by alias:", error);
