@@ -18,9 +18,12 @@
             v-model="email"
             placeholder="tu@correo.com"
             required
+            :disabled="loading"
           />
         </div>
-        <button type="submit">Enviar código</button>
+        <button type="submit" :disabled="loading">
+          {{ loading ? "Enviando..." : "Enviar código" }}
+        </button>
       </form>
       <form v-else @submit.prevent="handleChangePassword" class="form-grid">
         <div class="input-single">
@@ -31,6 +34,7 @@
             v-model="code"
             placeholder="Código recibido por email"
             required
+            :disabled="loading"
           />
         </div>
         <div class="input-pair">
@@ -42,6 +46,7 @@
               v-model="newPassword"
               placeholder="********"
               required
+              :disabled="loading"
             />
           </div>
           <div>
@@ -52,10 +57,13 @@
               v-model="confirmPassword"
               placeholder="********"
               required
+              :disabled="loading"
             />
           </div>
         </div>
-        <button type="submit">Cambiar contraseña</button>
+        <button type="submit" :disabled="loading">
+          {{ loading ? "Cambiando..." : "Cambiar contraseña" }}
+        </button>
       </form>
       <p class="login" @click="goToLogin">
         ¿Ya la recordaste? <span>Iniciar sesión</span>
@@ -64,23 +72,30 @@
   </LettucePatternBackground>
 </template>
 <script setup lang="ts">
+// ...existing code...
 import { ref } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { UserApi } from "../../api/user";
+import { UserApi } from "../../api/user.js"; // <--- LÍNEA CORREGIDA
 import { useSnackbarStore } from "../../stores/snackbar";
+import LettucePatternBackground from "../../components/LettucePatternBackground.vue"; // Importar el componente
+// ...existing code...
 
 const router = useRouter();
 const route = useRoute();
 const snackbarStore = useSnackbarStore();
 
 const email = ref("");
-const code = ref(route.query.code || "");
+const code = ref(route.query.code || ""); // Mantener la inicialización desde query
 const newPassword = ref("");
 const confirmPassword = ref("");
 const loading = ref(false);
 const step = ref(code.value ? 2 : 1); // 1: pedir código, 2: cambiar contraseña
 
 async function handleRequestCode() {
+  if (!email.value) {
+    snackbarStore.showError("Por favor, ingresa tu correo electrónico.");
+    return;
+  }
   loading.value = true;
   try {
     await UserApi.requestPasswordReset(email.value);
@@ -88,14 +103,11 @@ async function handleRequestCode() {
       "Te enviamos un correo con el código de recuperación."
     );
     step.value = 2;
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage =
-      error &&
-      typeof error === "object" &&
-      "description" in error &&
-      typeof error.description === "string"
-        ? error.description
-        : "Error al solicitar el código";
+      error?.description ||
+      error?.message ||
+      "Error al solicitar el código. Verifica el correo e intenta nuevamente.";
     snackbarStore.showError(errorMessage);
   } finally {
     loading.value = false;
@@ -103,6 +115,26 @@ async function handleRequestCode() {
 }
 
 async function handleChangePassword() {
+  if (!code.value) {
+    snackbarStore.showError("Por favor, ingresa el código de recuperación.");
+    return;
+  }
+  if (!newPassword.value || !confirmPassword.value) {
+    snackbarStore.showError("Por favor, completa ambos campos de contraseña.");
+    return;
+  }
+  if (newPassword.value !== confirmPassword.value) {
+    snackbarStore.showError("Las contraseñas no coinciden.");
+    return;
+  }
+  if (newPassword.value.length < 6) {
+    // Ejemplo de validación de longitud mínima
+    snackbarStore.showError(
+      "La nueva contraseña debe tener al menos 6 caracteres."
+    );
+    return;
+  }
+
   loading.value = true;
   try {
     await UserApi.changePassword({
@@ -111,14 +143,11 @@ async function handleChangePassword() {
     });
     snackbarStore.showSuccess("Contraseña actualizada correctamente.");
     router.push("/login");
-  } catch (error) {
+  } catch (error: any) {
     const errorMessage =
-      error &&
-      typeof error === "object" &&
-      "description" in error &&
-      typeof error.description === "string"
-        ? error.description
-        : "Error al cambiar la contraseña";
+      error?.description ||
+      error?.message ||
+      "Error al cambiar la contraseña. Verifica el código e intenta nuevamente.";
     snackbarStore.showError(errorMessage);
   } finally {
     loading.value = false;
@@ -127,6 +156,10 @@ async function handleChangePassword() {
 
 function goToLogin() {
   router.push("/login");
+}
+
+function goToLandingPage() {
+  router.push("/LandingPage"); // O la ruta que corresponda a tu landing page
 }
 </script>
 
@@ -206,8 +239,13 @@ button {
   transition: background-color 0.3s ease;
 }
 
-button:hover {
+button:hover:not(:disabled) {
   background-color: #388e3c;
+}
+
+button:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
 }
 
 .login {

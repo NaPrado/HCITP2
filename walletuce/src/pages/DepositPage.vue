@@ -28,6 +28,7 @@
               hide-details
               class="ml-2 mr-2 bg-grey-lighten-4"
               placeholder="Ingrese un monto"
+              min="0"
             />
           </v-card>
 
@@ -63,21 +64,28 @@
               label="Seleccione una tarjeta"
               class="mt-2 compact-select"
               :loading="loadingCards"
-              :disabled="loadingCards"
+              :disabled="loadingCards || cards.length === 0"
               :error-messages="errorTarjeta"
               density="compact"
               variant="outlined"
-              hide-details
+              hide-details="auto"
             ></v-select>
             <v-text-field
               v-if="origen === 'cuenta'"
               v-model="cvuCuenta"
-              label="Ingrese el CBU"
+              label="Ingrese el CBU/CVU"
               placeholder="0000000000000000000000"
               class="mt-2 compact-select"
               variant="outlined"
-              hide-details
+              hide-details="auto"
               density="compact"
+              maxlength="22"
+              counter
+              :rules="[
+                (v) => !!v || 'El CBU/CVU es requerido',
+                (v) =>
+                  /^\d{22}$/.test(v) || 'Debe contener 22 dígitos numéricos',
+              ]"
             />
           </v-card>
 
@@ -99,92 +107,114 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
 import { CardApi } from "../api/card.js";
-import { Api } from "../api/api.js";
-import { onMounted } from "vue";
+// import { Api } from "../api/api.js"; // Api no se usa directamente, CardApi la usa internamente
 import { useSnackbarStore } from "../stores/snackbar";
 
 const router = useRouter();
-const snackbar = ref(false);
-const mensajeError = ref("");
+const snackbarStore = useSnackbarStore(); // Usar el store global de snackbar
 
 const monto = ref("");
 const origen = ref("tarjeta"); // o el valor que prefieras por defecto
-const selectedCard = ref(null);
+const selectedCard = ref<string | null>(null); // Tipado explícito
 const cards = ref<{ displayName: string; id: string }[]>([]);
 const loadingCards = ref(false);
 const errorTarjeta = ref("");
+const cvuCuenta = ref(""); // Declarar cvuCuenta
 
 // Cargar tarjetas cuando se selecciona "tarjeta" como origen
 watch(origen, async (newValue) => {
   if (newValue === "tarjeta") {
+    if (cards.value.length === 0 && !loadingCards.value) {
+      // Cargar solo si no hay tarjetas y no se están cargando
+      await loadCards();
+    }
+  } else {
+    selectedCard.value = null; // Limpiar tarjeta seleccionada si se cambia de origen
+    errorTarjeta.value = ""; // Limpiar error de tarjeta
+  }
+});
+
+onMounted(async () => {
+  if (origen.value === "tarjeta") {
+    // Cargar tarjetas al montar solo si el origen inicial es tarjeta
     await loadCards();
   }
 });
 
-onMounted(() => {
-  loadCards();
-});
-
-type Card = {
+type CardFromApi = {
   fullName: string;
   number: string;
   id: string;
+  // Añade otros campos que esperas de la API si es necesario, ej: type
 };
 
 type CardApiResponse =
-  | Card[]
-  | { cards: Card[] }
-  | { result: Card[] }
+  | CardFromApi[]
+  | { cards: CardFromApi[] }
+  | { result: CardFromApi[] }
   | undefined
   | null;
 
 async function loadCards() {
   loadingCards.value = true;
+  errorTarjeta.value = ""; // Limpiar error previo
   try {
     const response = (await CardApi.getAll()) as CardApiResponse;
-    console.log(response);
+    console.log("Respuesta de CardApi.getAll():", response);
+
+    let rawCards: CardFromApi[] = [];
+
     if (Array.isArray(response)) {
-      cards.value = response.map((card) => ({
-        displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
-        id: card.id,
-      }));
+      rawCards = response;
     } else if (
       response &&
+      typeof response === "object" &&
       "cards" in response &&
       Array.isArray(response.cards)
     ) {
-      cards.value = response.cards.map((card) => ({
-        displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
-        id: card.id,
-      }));
+      rawCards = response.cards;
     } else if (
       response &&
+      typeof response === "object" &&
       "result" in response &&
       Array.isArray(response.result)
     ) {
-      cards.value = response.result.map((card) => ({
+      rawCards = response.result;
+    } else {
+      console.warn("Formato de respuesta de tarjetas no esperado:", response);
+    }
+
+    if (rawCards.length > 0) {
+      cards.value = rawCards.map((card) => ({
         displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
         id: card.id,
       }));
     } else {
-      cards.value = [];
+      cards.value = []; // Asegurar que cards esté vacío si no se obtienen tarjetas
     }
-  } catch (e) {
-    snackbarStore.showError("Error al cargar las tarjetas");
+
+    if (cards.value.length === 0) {
+      errorTarjeta.value = "No tiene tarjetas cargadas.";
+    }
+  } catch (e: any) {
+    console.error("Error al cargar tarjetas:", e);
+    const message =
+      e?.description || e?.message || "Error al cargar las tarjetas.";
+    snackbarStore.showError(message);
+    errorTarjeta.value = message; // Mostrar error también en el v-select
     cards.value = [];
+    if (e.code === 97) router.push("/login"); // Ejemplo de manejo de no autorizado
   } finally {
     loadingCards.value = false;
   }
 }
 
-function onVolverClick() {
-  router.push("./HomePage");
-}
+// onVolverClick ya no es necesaria, BackButton maneja la navegación
 
 function onCrearClick() {
   const montoNumero = parseFloat(monto.value);
@@ -192,28 +222,35 @@ function onCrearClick() {
     snackbarStore.showError("Por favor, ingrese un monto válido mayor a 0");
     return;
   }
-  if (origen.value === "tarjeta" && !selectedCard.value) {
-    snackbarStore.showError("Seleccioná una tarjeta");
-    return;
+
+  if (origen.value === "tarjeta") {
+    if (!selectedCard.value) {
+      snackbarStore.showError("Seleccioná una tarjeta");
+      errorTarjeta.value = "Debe seleccionar una tarjeta"; // Para mostrar en el v-select
+      return;
+    }
+    errorTarjeta.value = ""; // Limpiar error si la tarjeta está seleccionada
   }
-  if (
-    origen.value === "cuenta" &&
-    (!cvuCuenta.value || cvuCuenta.value.length !== 22)
-  ) {
-    mensajeError.value =
-      "Ingresá un CBU válido (debe contener veintidós dígitos)";
-    snackbar.value = true;
-    return;
+
+  if (origen.value === "cuenta") {
+    if (!cvuCuenta.value || !/^\d{22}$/.test(cvuCuenta.value)) {
+      snackbarStore.showError(
+        "Ingresá un CBU/CVU válido (debe contener 22 dígitos numéricos)"
+      );
+      return;
+    }
   }
+
   router.push({
     path: "./ConfirmDeposit",
     query: {
       monto: monto.value,
       origen: origen.value,
-      cardId: selectedCard.value,
+      cardId: selectedCard.value || undefined, // Enviar undefined si es null
       cardDisplay:
-        cards.value.find((c) => c.id === selectedCard.value)?.displayName || "",
-      cvu: cvuCuenta.value,
+        cards.value.find((c) => c.id === selectedCard.value)?.displayName ||
+        undefined,
+      cvu: origen.value === "cuenta" ? cvuCuenta.value : undefined, // Enviar cvu solo si el origen es cuenta
     },
   });
 }
@@ -257,5 +294,12 @@ function onCrearClick() {
 .v-toolbar-title {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
+}
+.compact-select .v-input__control {
+  min-height: auto !important;
+}
+/* Para asegurar que el v-text-field de CBU/CVU muestre el contador y errores correctamente */
+.v-text-field {
+  margin-bottom: 4px; /* Ajusta según sea necesario para el espacio de los mensajes de error/contador */
 }
 </style>
