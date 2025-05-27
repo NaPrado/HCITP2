@@ -1,15 +1,6 @@
 <template>
   <v-app>
     <v-container fluid class="pa-0 main-bg">
-      <v-snackbar
-        v-model="snackbar"
-        timeout="3000"
-        location="top center"
-        class="snackbar-custom"
-      >
-        {{ mensajeError }}
-      </v-snackbar>
-
       <!-- Barra superior -->
       <AppHeader titulo="Ingresar Dinero" />
       <!-- Contenido principal -->
@@ -115,15 +106,13 @@ import BackButton from "../components/BackButton.vue";
 import { CardApi } from "../api/card.js";
 import { Api } from "../api/api.js";
 import { onMounted } from "vue";
+import { useSnackbarStore } from "../stores/snackbar";
 
 const router = useRouter();
 const snackbar = ref(false);
 const mensajeError = ref("");
-const cvuCuenta = ref("");
-
 
 const monto = ref("");
-
 const origen = ref("tarjeta"); // o el valor que prefieras por defecto
 const selectedCard = ref(null);
 const cards = ref<{ displayName: string; id: string }[]>([]);
@@ -183,11 +172,10 @@ async function loadCards() {
         id: card.id,
       }));
     } else {
-      // Si no hay tarjetas o el formato es inesperado, dejá el array vacío
       cards.value = [];
     }
   } catch (e) {
-    errorTarjeta.value = "Error al cargar las tarjetas";
+    snackbarStore.showError("Error al cargar las tarjetas");
     cards.value = [];
   } finally {
     loadingCards.value = false;
@@ -201,33 +189,36 @@ function onVolverClick() {
 function onCrearClick() {
   const montoNumero = parseFloat(monto.value);
   if (!monto.value || isNaN(montoNumero) || montoNumero <= 0) {
-    mensajeError.value = "Por favor, ingrese un monto válido mayor a 0";
-    snackbar.value = true;
+    snackbarStore.showError("Por favor, ingrese un monto válido mayor a 0");
     return;
   }
   if (origen.value === "tarjeta" && !selectedCard.value) {
-    mensajeError.value = "Seleccioná una tarjeta";
-    snackbar.value = true;
+    snackbarStore.showError("Seleccioná una tarjeta");
     return;
   }
-  if (origen.value === "cuenta" && (!cvuCuenta.value || cvuCuenta.value.length !== 22)) {
-    mensajeError.value = "Ingresá un CBU válido (debe contener veintidós dígitos)";
+  if (
+    origen.value === "cuenta" &&
+    (!cvuCuenta.value || cvuCuenta.value.length !== 22)
+  ) {
+    mensajeError.value =
+      "Ingresá un CBU válido (debe contener veintidós dígitos)";
     snackbar.value = true;
     return;
   }
   router.push({
-  path: "./ConfirmDeposit",
-  query: {
-    monto: monto.value,
-    origen: origen.value,
-    cardId: selectedCard.value,
-    cardDisplay: cards.value.find(c => c.id === selectedCard.value)?.displayName || "",
-    cvu: cvuCuenta.value,
-  },
-});
-
+    path: "./ConfirmDeposit",
+    query: {
+      monto: monto.value,
+      origen: origen.value,
+      cardId: selectedCard.value,
+      cardDisplay:
+        cards.value.find((c) => c.id === selectedCard.value)?.displayName || "",
+      cvu: cvuCuenta.value,
+    },
+  });
 }
 </script>
+
 <style scoped>
 .main-bg {
   background: #eee !important;
@@ -266,21 +257,5 @@ function onCrearClick() {
 .v-toolbar-title {
   margin-top: 0 !important;
   margin-bottom: 0 !important;
-}
-.back-button {
-  align-self: flex-start;
-  margin-left: 20%;
-  margin-bottom: 10px;
-  font-weight: 600;
-  font-size: 1rem;
-  color: rgba(0, 0, 0, 0.7) !important;
-}
-
-.snackbar-custom {
-  border-radius: 10px !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15) !important;
-  font-weight: 500;
-  font-size: 1rem;
-  padding: 12px 20px;
 }
 </style>

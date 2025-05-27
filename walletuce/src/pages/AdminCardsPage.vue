@@ -279,8 +279,10 @@ import {
   CARD_TYPES,
 } from "../api/cards.js";
 import { Api } from "../api/api.js";
+import { useSnackbarStore } from "../stores/snackbar";
 
 const router = useRouter();
+const snackbarStore = useSnackbarStore();
 const tarjetaSeleccionada = ref<number | null>(null);
 const mostrarDialogoEliminar = ref(false);
 const mostrarConfirmacionFinal = ref(false);
@@ -423,6 +425,7 @@ async function agregarTarjeta() {
       type: "CREDIT",
     };
     mostrarDialogoAgregar.value = false;
+    snackbarStore.showSuccess("Tarjeta agregada correctamente");
   } catch (e: any) {
     console.error("Error al agregar tarjeta:", e);
     if (e.code === 97 && e.description === "Unauthorized.") {
@@ -452,9 +455,10 @@ async function confirmarEliminarTarjeta() {
       tarjetaSeleccionada.value = null;
       mostrarDialogoEliminar.value = false;
       mostrarConfirmacionFinal.value = false;
+      snackbarStore.showSuccess("Tarjeta eliminada correctamente");
     } catch (e: any) {
       console.error("Error al eliminar tarjeta:", e);
-      // Aquí podrías mostrar un mensaje de error al usuario
+      snackbarStore.showError("Error al eliminar la tarjeta");
     }
   }
 }

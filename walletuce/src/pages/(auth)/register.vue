@@ -98,8 +98,10 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { UserApi } from "@/api/user.js";
+import { useSnackbarStore } from "../../stores/snackbar";
 
 const router = useRouter();
+const snackbarStore = useSnackbarStore();
 
 const firstName = ref("");
 const lastName = ref("");
@@ -114,29 +116,39 @@ async function register() {
 
   // Parse dd/mm/yyyy to YYYY-MM-DD format for the API
   let formattedBirthDate = "";
-  const dateParts = birthDate.value.split('/');
-  if (dateParts.length === 3) {
-    const day = dateParts[0];
-    const month = dateParts[1];
-    const year = dateParts[2];
+  const dateParts = birthDate.value.split("/");
+  if (dateParts.length === 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
+    const day = parseInt(dateParts[0]);
+    const month = parseInt(dateParts[1]);
+    const year = parseInt(dateParts[2]);
     // Basic validation: ensure parts are numbers and month/day are within reasonable range
-    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-       formattedBirthDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    if (
+      !isNaN(day) &&
+      !isNaN(month) &&
+      !isNaN(year) &&
+      month >= 1 &&
+      month <= 12 &&
+      day >= 1 &&
+      day <= 31
+    ) {
+      formattedBirthDate = `${year}-${month.toString().padStart(2, "0")}-${day
+        .toString()
+        .padStart(2, "0")}`;
     } else {
-      alert("Formato de fecha inválido. Utiliza dd/mm/yyyy.");
+      snackbarStore.showError("Formato de fecha inválido. Utiliza dd/mm/yyyy.");
       loading.value = false;
       return; // Stop registration if format is invalid
     }
   } else if (birthDate.value !== "") {
-     alert("Formato de fecha inválido. Utiliza dd/mm/yyyy.");
-     loading.value = false;
-     return; // Stop registration if format is invalid
+    snackbarStore.showError("Formato de fecha inválido. Utiliza dd/mm/yyyy.");
+    loading.value = false;
+    return; // Stop registration if format is invalid
   }
 
   // Validate phone number: 6 to 15 digits
   const phoneRegex = /^\d{6,15}$/;
   if (!phoneRegex.test(phone.value)) {
-    alert("Número de teléfono inválido.");
+    snackbarStore.showError("Número de teléfono inválido.");
     loading.value = false;
     return; // Stop registration if phone is invalid
   }
@@ -153,10 +165,19 @@ async function register() {
   try {
     // Llama a la API para registrar el usuario usando UserApi
     const response = await UserApi.register(newUser);
-    alert("Usuario registrado correctamente");
+    snackbarStore.showSuccess(
+      "¡Cuenta creada exitosamente! Te enviamos un código de verificación a tu email."
+    );
     router.push({ path: "/emailVerification", query: { email: email.value } });
-  } catch (e) {
-    alert(e.description || "Error al registrar usuario");
+  } catch (error) {
+    const errorMessage =
+      error &&
+      typeof error === "object" &&
+      "description" in error &&
+      typeof error.description === "string"
+        ? error.description
+        : "Error al registrar usuario";
+    snackbarStore.showError(errorMessage);
   } finally {
     loading.value = false;
   }
@@ -293,5 +314,4 @@ button:hover {
 
 
 /* Remove all Datepicker specific styles */
-
 </style>

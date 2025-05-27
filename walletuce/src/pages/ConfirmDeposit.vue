@@ -59,16 +59,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
 import { AccountApi } from "../api/account";
+import { useSnackbarStore } from "../stores/snackbar";
 
 const snackbar = ref(false);
 const mensajeError = ref("");
 const router = useRouter();
 const route = useRoute();
+const snackbarStore = useSnackbarStore();
 
 // Recibir los datos desde la ruta
 function formatearDinero(valor: number): string {
@@ -116,6 +118,9 @@ async function onCrearClick() {
     // Opcional: podés mostrar el nuevo saldo o actualizarlo en un store/reactivo
     // balance.value = response.balance; // si usás balance en este componente
     // Redirige al HomePage o muestra mensaje de éxito
+    snackbarStore.showSuccess(
+      `Depósito de $${monto_ingresado.value} realizado con éxito`
+    );
     router.push("./HomePage");
   } catch (e) {
     const err = e as any;

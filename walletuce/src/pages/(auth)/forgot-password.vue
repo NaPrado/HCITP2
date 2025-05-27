@@ -1,74 +1,15 @@
-<script setup>
-import { ref } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import { UserApi } from "@/api/user.js";
-
-const router = useRouter();
-const route = useRoute();
-
-const email = ref("");
-const newPassword = ref("");
-const confirmPassword = ref("");
-const code = ref(route.query.code || "");
-const step = ref(code.value ? 2 : 1); // 1: pedir código, 2: cambiar contraseña
-
-async function requestReset() {
-  if (!email.value) {
-    alert("Por favor, ingresa tu correo electrónico.");
-    return;
-  }
-  try {
-    await UserApi.requestPasswordReset(email.value);
-    alert("Te enviamos un correo con el código de recuperación.");
-    step.value = 2;
-  } catch (e) {
-    alert(e?.description || "No se pudo enviar el correo de recuperación.");
-  }
-}
-
-async function resetPassword() {
-  if (!code.value) {
-    alert("El código de recuperación es requerido.");
-    return;
-  }
-  if (newPassword.value !== confirmPassword.value) {
-    alert("Las contraseñas no coinciden.");
-    return;
-  }
-  try {
-    await UserApi.changePassword({
-      code: code.value,
-      password: newPassword.value,
-    });
-    alert("Contraseña actualizada correctamente.");
-    router.push("/login");
-  } catch (e) {
-    alert(e?.description || "No se pudo actualizar la contraseña.");
-  }
-}
-
-function goToLogin() {
-  router.push("/login");
-}
-
-function goToLandingPage() {
-  router.push("/LandingPage");
-}
-
-</script>
-
 <template>
   <LettucePatternBackground>
     <div class="register-box">
       <div class="logo-wrapper" @click="goToLandingPage">
-        <img
-          src="@/assets/letucce.svg"
-          alt="Letucce Logo"
-          class="logo"
-        />
+        <img src="@/assets/letucce.svg" alt="Letucce Logo" class="logo" />
       </div>
       <h2>Restablecer contraseña</h2>
-      <form v-if="step === 1" @submit.prevent="requestReset" class="form-grid">
+      <form
+        v-if="step === 1"
+        @submit.prevent="handleRequestCode"
+        class="form-grid"
+      >
         <div class="input-single">
           <label for="email">Correo electrónico</label>
           <input
@@ -81,7 +22,7 @@ function goToLandingPage() {
         </div>
         <button type="submit">Enviar código</button>
       </form>
-      <form v-else @submit.prevent="resetPassword" class="form-grid">
+      <form v-else @submit.prevent="handleChangePassword" class="form-grid">
         <div class="input-single">
           <label for="code">Código de recuperación</label>
           <input
@@ -122,6 +63,72 @@ function goToLandingPage() {
     </div>
   </LettucePatternBackground>
 </template>
+<script setup lang="ts">
+import { ref } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { UserApi } from "../../api/user";
+import { useSnackbarStore } from "../../stores/snackbar";
+
+const router = useRouter();
+const route = useRoute();
+const snackbarStore = useSnackbarStore();
+
+const email = ref("");
+const code = ref(route.query.code || "");
+const newPassword = ref("");
+const confirmPassword = ref("");
+const loading = ref(false);
+const step = ref(code.value ? 2 : 1); // 1: pedir código, 2: cambiar contraseña
+
+async function handleRequestCode() {
+  loading.value = true;
+  try {
+    await UserApi.requestPasswordReset(email.value);
+    snackbarStore.showSuccess(
+      "Te enviamos un correo con el código de recuperación."
+    );
+    step.value = 2;
+  } catch (error) {
+    const errorMessage =
+      error &&
+      typeof error === "object" &&
+      "description" in error &&
+      typeof error.description === "string"
+        ? error.description
+        : "Error al solicitar el código";
+    snackbarStore.showError(errorMessage);
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function handleChangePassword() {
+  loading.value = true;
+  try {
+    await UserApi.changePassword({
+      code: code.value,
+      password: newPassword.value,
+    });
+    snackbarStore.showSuccess("Contraseña actualizada correctamente.");
+    router.push("/login");
+  } catch (error) {
+    const errorMessage =
+      error &&
+      typeof error === "object" &&
+      "description" in error &&
+      typeof error.description === "string"
+        ? error.description
+        : "Error al cambiar la contraseña";
+    snackbarStore.showError(errorMessage);
+  } finally {
+    loading.value = false;
+  }
+}
+
+function goToLogin() {
+  router.push("/login");
+}
+</script>
 
 <style scoped>
 .register-box {
@@ -133,7 +140,6 @@ function goToLandingPage() {
   max-width: 95vw;
   text-align: center;
 }
-
 
 h2 {
   margin-bottom: 24px;
@@ -239,7 +245,6 @@ button:hover {
   background-color: #dcedc8;
   box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
 }
-
 
 .logo {
   width: 80px;

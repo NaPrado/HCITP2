@@ -223,8 +223,10 @@ import { useRouter } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
 import { AccountApi } from "../api/account";
 import { UserApi } from "../api/user";
+import { useSnackbarStore } from "../stores/snackbar";
 
 const router = useRouter();
+const snackbarStore = useSnackbarStore();
 
 const balance = ref(0);
 const cvu = ref("");
@@ -297,8 +299,9 @@ async function guardarAlias() {
     await AccountApi.updateAlias({ alias: nuevoAlias.value });
     alias.value = nuevoAlias.value;
     editandoAlias.value = false;
+    snackbarStore.showSuccess("Alias actualizado correctamente");
   } catch (e) {
-    alert("Error al actualizar el alias");
+    snackbarStore.showError("Error al actualizar el alias");
   }
 }
 
@@ -346,7 +349,13 @@ function handleActionClick(action: string) {
       router.push("./DepositPage");
       break;
     case "transferir":
-      router.push("./TransferPage");
+      // Asegúrate de que balance.value es un número antes de convertirlo a string
+      const currentBalance =
+        typeof balance.value === "number" ? balance.value.toString() : "";
+      router.push({
+        path: "./TransferPage",
+        query: { balance: currentBalance },
+      });
       break;
     case "generarCobro":
       router.push("./GeneratePaymentPage");

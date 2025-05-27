@@ -13,62 +13,134 @@
           variant="text"
           class="align-self-start ml-4 mt-4"
         />
-        <v-card class="pa-4 container-card bg-grey-lighten-2" rounded="lg">
-          <v-container
-            class="monto-card dashboard-balance mb-8 bg-green-lighten-1"
-          >
-            <v-container
-              class="text-h4 font-weight-bold text-grey-lighten-4 pa-0"
-              >Saldo</v-container
-            >
-            <v-container
-              class="text-h6 font-weight-bold text-grey-lighten-4 pa-0"
-              >$205.376,82</v-container
-            >
-          </v-container>
 
+        <!-- Filtros -->
+        <v-card class="mb-4 pa-4 container-card" rounded="lg">
+          <v-row>
+            <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="filters.direction"
+                :items="[
+                  { title: 'Más recientes primero', value: 'DESC' },
+                  { title: 'Más antiguos primero', value: 'ASC' },
+                ]"
+                label="Ordenar por fecha"
+                density="comfortable"
+                variant="outlined"
+                hide-details
+              ></v-select>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="filters.range"
+                :items="[
+                  { title: 'Todos', value: null },
+                  { title: 'Últimos 3 días', value: 'THREE_DAYS' },
+                  { title: 'Última semana', value: 'LAST_WEEK' },
+                  { title: 'Último mes', value: 'LAST_MONTH' },
+                ]"
+                label="Período"
+                density="comfortable"
+                variant="outlined"
+                hide-details
+              ></v-select>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="filters.method"
+                :items="[
+                  { title: 'Todos', value: null },
+                  { title: 'Cuenta', value: 'ACCOUNT' },
+                  { title: 'Tarjeta', value: 'CARD' },
+                ]"
+                label="Método"
+                density="comfortable"
+                variant="outlined"
+                hide-details
+              ></v-select>
+            </v-col>
+            <v-col cols="12" sm="6" md="3">
+              <v-select
+                v-model="filters.role"
+                :items="[
+                  { title: 'Todos', value: null },
+                  { title: 'Pagos realizados', value: 'PAYER' },
+                  { title: 'Pagos recibidos', value: 'RECEIVER' },
+                ]"
+                label="Tipo"
+                density="comfortable"
+                variant="outlined"
+                hide-details
+              ></v-select>
+            </v-col>
+          </v-row>
+        </v-card>
+
+        <v-card class="pa-4 container-card bg-grey-lighten-2" rounded="lg">
           <!-- Lista de movimientos scrolleable -->
           <div class="movements-container">
-            <div v-if="hayMovimientos" class="movements-list">
+            <div v-if="movements.length > 0" class="movements-list">
               <v-card
-                v-for="(movimiento, index) in movimientos"
-                :key="index"
+                v-for="movement in movements"
+                :key="movement.id"
                 class="mb-3 pa-3 rounded-lg movimiento-card"
                 flat
               >
                 <div class="d-flex justify-space-between align-center">
                   <div>
                     <div class="text-subtitle-1 font-weight-bold text-black">
-                      {{ movimiento.nombre }}
+                      {{ movement.description || "Sin descripción" }}
                     </div>
-                    <div class="text-body-2 text-black">
-                      {{ movimiento.descripcion }}
+                    <div class="text-body-2 text-grey">
+                      {{ formatDate(movement.date) }}
+                    </div>
+                    <div class="text-caption text-grey-darken-1">
+                      {{ movement.method === "ACCOUNT" ? "Cuenta" : "Tarjeta" }}
+                      <v-chip
+                        size="x-small"
+                        :color="
+                          movement.status === 'PENDING' ? 'warning' : 'success'
+                        "
+                        class="ml-2"
+                      >
+                        {{
+                          movement.status === "PENDING"
+                            ? "Pendiente"
+                            : "Confirmado"
+                        }}
+                      </v-chip>
                     </div>
                   </div>
                   <div
                     class="text-subtitle-1 font-weight-bold"
-                    :class="
-                      movimiento.monto.startsWith('-')
-                        ? 'text-red'
-                        : 'text-green'
-                    "
+                    :class="getAmountClass(movement)"
                   >
-                    {{ movimiento.monto }}
+                    {{ formatAmount(movement) }}
                   </div>
                 </div>
               </v-card>
 
-              <!-- Botón de más movimientos -->
-              <div class="text-center my-3">
-                <v-btn
-                  variant="text"
-                  color="grey"
-                  density="comfortable"
-                  class="more-btn"
-                >
-                  <v-icon>mdi-dots-horizontal</v-icon>
-                </v-btn>
+              <!-- Paginación -->
+              <div class="text-center mt-4">
+                <v-pagination
+                  v-model="currentPage"
+                  :length="totalPages"
+                  :total-visible="5"
+                  rounded="circle"
+                ></v-pagination>
               </div>
+            </div>
+
+            <!-- Loading state -->
+            <div
+              v-else-if="loading"
+              class="d-flex justify-center align-center"
+              style="height: 200px"
+            >
+              <v-progress-circular
+                indeterminate
+                color="green"
+              ></v-progress-circular>
             </div>
 
             <!-- Mensaje cuando no hay movimientos -->
@@ -90,56 +162,165 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { ref, computed } from "vue";
 import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
+import { PaymentsService, type PaymentQueryParams } from "../api/payments.js";
+import { useSnackbarStore } from "../stores/snackbar";
+
+interface Movement {
+  id: string;
+  amount: number;
+  description: string;
+  date: string;
+  role: "PAYER" | "RECEIVER";
+  method: "ACCOUNT" | "CARD" | null;
+  status: "PENDING" | "CONFIRMED" | "CANCELLED";
+  relatedAccount?: string;
+}
 
 const router = useRouter();
-const mostrarMovimientos = ref(true); // Cambiar a false para mostrar mensaje de "No hay movimientos"
+const snackbarStore = useSnackbarStore();
+const loading = ref(false);
+const movements = ref<Movement[]>([]);
+const currentPage = ref(1);
+const totalPages = ref(1);
+const itemsPerPage = 10;
 
-// Genera varios movimientos de ejemplo para mostrar scrolling
-const movimientosEjemplo = [
-  {
-    nombre: "MorfiPlace",
-    descripcion: "Pago en tienda física",
-    monto: "-$15.500,00",
-  },
-  {
-    nombre: "Juan Perez",
-    descripcion: "Transferencia recibida",
-    monto: "$7.300,00",
-  },
-  {
-    nombre: "Supermercado El Trébol",
-    descripcion: "Pago en tienda física",
-    monto: "-$8.250,75",
-  },
-  {
-    nombre: "Martín González",
-    descripcion: "Transferencia recibida",
-    monto: "$12.000,00",
-  },
-  {
-    nombre: "Netflix",
-    descripcion: "Suscripción mensual",
-    monto: "-$3.990,00",
-  },
-  {
-    nombre: "Farmacia Central",
-    descripcion: "Pago en tienda física",
-    monto: "-$4.325,50",
-  },
-];
+const filters = ref<{
+  direction: "ASC" | "DESC";
+  pending: boolean | null;
+  method: "ACCOUNT" | "CARD" | null;
+  range: "THREE_DAYS" | "LAST_WEEK" | "LAST_MONTH" | null;
+  role: "PAYER" | "RECEIVER" | null;
+  cardId: number | null;
+}>({
+  direction: "DESC",
+  pending: null,
+  method: null,
+  range: null,
+  role: null,
+  cardId: null,
+});
 
-const movimientos = movimientosEjemplo;
+async function loadMovements() {
+  loading.value = true;
+  try {
+    const queryParams: PaymentQueryParams = {
+      page: currentPage.value,
+      direction: filters.value.direction,
+    };
 
-const hayMovimientos = computed(
-  () => mostrarMovimientos.value && movimientos.length > 0
+    if (filters.value.method) {
+      queryParams.method = filters.value.method;
+    }
+    if (filters.value.range) {
+      queryParams.range = filters.value.range;
+    }
+    if (filters.value.role) {
+      queryParams.role = filters.value.role;
+    }
+    if (filters.value.pending !== null) {
+      queryParams.pending = filters.value.pending;
+    }
+    if (filters.value.cardId !== null) {
+      queryParams.cardId = filters.value.cardId;
+    }
+
+    const response = await PaymentsService.getPayments(queryParams);
+
+    if (response && Array.isArray(response.results)) {
+      movements.value = response.results as Movement[];
+      totalPages.value =
+        response.paging?.totalPages ||
+        (response.results.length > 0
+          ? Math.ceil(response.results.length / itemsPerPage)
+          : 1);
+      if (currentPage.value > totalPages.value && totalPages.value > 0) {
+        currentPage.value = totalPages.value;
+      }
+      if (totalPages.value === 0 && response.results.length === 0)
+        totalPages.value = 1;
+      if (response.results.length === 0) currentPage.value = 1;
+    } else {
+      movements.value = [];
+      totalPages.value = 1;
+      currentPage.value = 1;
+    }
+  } catch (error: any) {
+    console.error("Error loading movements:", error);
+    snackbarStore.showError(
+      error?.description || "Error al cargar los movimientos"
+    );
+    movements.value = [];
+    totalPages.value = 1;
+    currentPage.value = 1;
+    if (error.code === 97) router.push("/login");
+  } finally {
+    loading.value = false;
+  }
+}
+
+watch(
+  [() => ({ ...filters.value }), () => currentPage.value],
+  ([newFilters, newPage], [oldFilters, oldPage]) => {
+    const filtersActuallyChanged =
+      JSON.stringify(newFilters) !== JSON.stringify(oldFilters);
+
+    if (filtersActuallyChanged) {
+      if (currentPage.value !== 1) {
+        currentPage.value = 1;
+      } else {
+        loadMovements();
+      }
+    } else if (newPage !== oldPage) {
+      loadMovements();
+    }
+  },
+  { deep: true }
 );
 
-function onVolverClick() {
-  router.push("./HomePage");
+onMounted(() => {
+  loadMovements();
+});
+
+function formatCurrency(amount: number) {
+  return amount.toLocaleString("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 2,
+  });
+}
+
+function formatDate(dateString: string) {
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return "Fecha no disponible";
+    }
+    return new Intl.DateTimeFormat("es-AR", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(date);
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "Fecha no disponible";
+  }
+}
+
+function getAmountClass(movement: Movement) {
+  if (movement.role === "PAYER") return "text-red";
+  return "text-green";
+}
+
+function formatAmount(movement: Movement) {
+  const amount = movement.role === "PAYER" ? -movement.amount : movement.amount;
+  return formatCurrency(amount);
 }
 </script>
 
@@ -208,7 +389,7 @@ function onVolverClick() {
 }
 
 .movements-list {
-  max-height: 350px;
+  max-height: 500px;
   overflow-y: auto;
   padding-right: 8px;
 }

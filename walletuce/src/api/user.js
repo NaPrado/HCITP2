@@ -31,7 +31,7 @@ class UserApi {
   static async verify(code, controller) {
     return await Api.post(
       UserApi.getUrl(`verify?code=${encodeURIComponent(code)}`),
-      true,
+      false,
       {},
       controller
     );

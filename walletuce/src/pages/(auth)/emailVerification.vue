@@ -9,7 +9,7 @@
         electrónico.
       </p>
 
-      <form @submit.prevent="verifyCode" class="form-grid">
+      <form @submit.prevent="verifyEmail" class="form-grid">
         <div>
           <label for="code">Código de verificación</label>
           <input
@@ -23,7 +23,7 @@
 
         <button type="submit" :disabled="loading">Verificar</button>
 
-        <p class="resend" @click="resendCode">
+        <p class="resend" @click="resendVerification">
           ¿No recibiste el código? <span>Reenviar</span>
         </p>
       </form>
@@ -33,44 +33,91 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { UserApi } from "@/api/user";
+import { useRouter, useRoute } from "vue-router";
+import { UserApi } from "../../api/user";
+import { useSnackbarStore } from "../../stores/snackbar";
 
-const code = ref("");
-const loading = ref(false);
 const router = useRouter();
-const email = ref(""); // Nuevo: para reenviar el código
+const route = useRoute();
+const snackbarStore = useSnackbarStore();
 
-// Si querés obtener el email desde query params (por ejemplo, después del registro)
-if (router.currentRoute.value.query.email) {
-  email.value = router.currentRoute.value.query.email;
-}
+const email = ref(route.query["email"]?.toString() || "");
+const code = ref(route.query["code"]?.toString() || "");
+const loading = ref(false);
 
-async function verifyCode() {
+async function verifyEmail() {
   loading.value = true;
   try {
+    // Clear any existing session data before verifying
+    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
+
     await UserApi.verify(code.value);
-    alert("Cuenta verificada con éxito");
+    snackbarStore.showSuccess("Email verificado correctamente");
     router.push("/login");
-  } catch (e) {
-    alert(e.description || "Código inválido");
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "description" in error &&
+      typeof error.description === "string" &&
+      error.description.toLowerCase().includes("already verified")
+    ) {
+      snackbarStore.showSuccess(
+        "Tu cuenta ya está verificada. Puedes iniciar sesión."
+      );
+      router.push("/login");
+      return;
+    }
+
+    const errorMessage =
+      error &&
+      typeof error === "object" &&
+      "description" in error &&
+      typeof error.description === "string"
+        ? error.description
+        : "Error al verificar el email";
+    snackbarStore.showError(errorMessage);
   } finally {
     loading.value = false;
   }
 }
 
-async function resendCode() {
-  console.log(email.value);
+async function resendVerification() {
   if (!email.value) {
-    alert("No se encontró el email para reenviar el código.");
+    snackbarStore.showError("No se encontró el email para reenviar el código");
     return;
   }
+
   loading.value = true;
   try {
     await UserApi.resendVerification(email.value);
-    alert("Código reenviado");
-  } catch (e) {
-    alert(e.description || "Error al reenviar código");
+    // Clear the previous code from the input
+    code.value = "";
+    snackbarStore.showSuccess("Se ha enviado un nuevo código de verificación");
+  } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "description" in error &&
+      typeof error.description === "string" &&
+      error.description.toLowerCase().includes("already verified")
+    ) {
+      snackbarStore.showSuccess(
+        "Tu cuenta ya está verificada. Puedes iniciar sesión."
+      );
+      router.push("/login");
+      return;
+    }
+
+    const errorMessage =
+      error &&
+      typeof error === "object" &&
+      "description" in error &&
+      typeof error.description === "string"
+        ? error.description
+        : "Error al reenviar el código de verificación";
+    snackbarStore.showError(errorMessage);
   } finally {
     loading.value = false;
   }

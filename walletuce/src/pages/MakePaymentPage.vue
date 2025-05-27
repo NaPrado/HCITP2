@@ -73,13 +73,13 @@
 
           <!-- Alerta de error -->
           <v-alert
-            v-if="error"
+            v-if="errorLocal"
             type="error"
             class="mb-4"
             closable
-            @click="error = ''"
+            @click="errorLocal = ''"
           >
-            {{ error }}
+            {{ errorLocal }}
           </v-alert>
 
           <!-- Botones -->
@@ -103,88 +103,180 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { ref, computed, watch, onMounted } from "vue";
-import { CardApi } from "../api/card.js";
+// Use the Card type from card.js as the single source of truth.
+// Ensure its definition (especially cvv) is consistent with the API response.
+import { CardApi, type Card as ApiCardType } from "../api/card.js";
 import { Api } from "../api/api.js";
 import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
-import { PaymentsService } from "../api/payments.js";
+import { useSnackbarStore } from "../stores/snackbar";
+
+// This interface is for the cards once they are processed for display
+interface DisplayCard {
+  displayName: string;
+  id: string;
+}
+
+// Define a type for the raw card object returned by the API
+// This should match the structure of objects in the array returned by CardApi.getAll()
+// and be consistent with ApiCardType from ../api/card.js
+interface RawCard {
+  id: string | number;
+  fullName: string;
+  number: string;
+  cvv?: string;
+  // Include other properties from ApiCardType, making them optional if they can be missing
+  // For example, if ApiCardType has expiryDate, it would be: expiryDate?: string;
+  // This is a pragmatic approach if ApiCardType is stricter than the actual API data.
+  // Ideally, ApiCardType itself should accurately reflect the API contract.
+}
+
+// Type for the overall API response structure, if it's an object wrapping the array
+interface GetAllCardsApiResponse {
+  cards?: RawCard[];
+  data?: RawCard[];
+  result?: RawCard[];
+  // Add other potential top-level keys if your API nests the array
+}
 
 const router = useRouter();
+const snackbarStore = useSnackbarStore();
 
 const identificador = ref("");
-const origen = ref("balance");
-const selectedCard = ref(null);
-const cards = ref([]);
+const origen = ref<"balance" | "card">("balance");
+const selectedCard = ref<string | null>(null);
+const cards = ref<DisplayCard[]>([]); // Holds cards formatted for display
 const loadingCards = ref(false);
-const error = ref("");
-const errorTarjeta = ref("");
+const errorLocal = ref(""); // For general errors on the page
+const errorTarjeta = ref(""); // Specific for the card selection field
 
-// Validación
 const isValid = computed(() => {
-  if (!identificador.value) return false;
+  if (!identificador.value.trim()) return false;
   if (origen.value === "card" && !selectedCard.value) return false;
   return true;
 });
 
-function getSelectedCardDisplay() {
+function getSelectedCardDisplay(): string {
   if (!selectedCard.value) return "";
   const card = cards.value.find((c) => c.id === selectedCard.value);
   return card ? card.displayName : "";
 }
 
-// Cargar tarjetas al montar la página
 onMounted(() => {
-  loadCards();
+  if (origen.value === "card") {
+    loadCards();
+  }
 });
 
-// Cargar tarjetas cuando se selecciona ese método de pago
-watch(origen, async (newValue) => {
+watch(origen, (newValue) => {
+  errorTarjeta.value = "";
   if (newValue === "card") {
-    await loadCards();
+    if (cards.value.length === 0 && !loadingCards.value) {
+      loadCards();
+    }
+  } else {
+    selectedCard.value = null;
   }
 });
 
 async function loadCards() {
   if (!Api.token) {
+    snackbarStore.showError(
+      "Sesión no iniciada. Por favor, ingrese nuevamente."
+    );
     router.push("/login");
     return;
   }
 
   loadingCards.value = true;
+  errorTarjeta.value = "";
+  cards.value = []; // Clear previous cards
+
   try {
-    const response = await CardApi.getAll();
+    // Expect CardApi.getAll() to return Promise<RawCard[] | GetAllCardsApiResponse>
+    const response: RawCard[] | GetAllCardsApiResponse = await CardApi.getAll();
+
+    let fetchedRawCards: RawCard[] = [];
+
     if (Array.isArray(response)) {
-      cards.value = response.map((card) => ({
-        displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
-        id: card.id,
-      }));
-    } else if (response && Array.isArray(response.cards)) {
-      cards.value = response.cards.map((card) => ({
-        displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
-        id: card.id,
-      }));
+      fetchedRawCards = response;
+    } else if (response && typeof response === "object") {
+      const responseObject = response as GetAllCardsApiResponse;
+      if (Array.isArray(responseObject.cards)) {
+        fetchedRawCards = responseObject.cards;
+      } else if (Array.isArray(responseObject.data)) {
+        fetchedRawCards = responseObject.data;
+      } else if (Array.isArray(responseObject.result)) {
+        fetchedRawCards = responseObject.result;
+      } else {
+        // If the object doesn't match known structures, but might be a single card object (edge case?)
+        // Or it's an unexpected structure
+        console.warn(
+          "Unexpected response structure from CardApi.getAll:",
+          response
+        );
+      }
     }
-  } catch (e) {
+
+    if (fetchedRawCards.length > 0) {
+      // Filter out any cards that might be missing essential data for display
+      cards.value = fetchedRawCards
+        .filter(
+          (card) => card && card.id != null && card.fullName && card.number
+        )
+        .map((card: RawCard) => ({
+          displayName: `${card.fullName} - **** ${card.number.slice(-4)}`,
+          id: card.id.toString(), // Ensure ID is a string for v-select model
+        }));
+      if (cards.value.length === 0 && fetchedRawCards.length > 0) {
+        errorTarjeta.value =
+          "Algunas tarjetas no pudieron ser mostradas (datos incompletos).";
+      } else if (fetchedRawCards.length === 0) {
+        errorTarjeta.value =
+          "No tiene tarjetas cargadas o no se pudieron obtener.";
+      }
+    } else {
+      errorTarjeta.value =
+        "No tiene tarjetas cargadas o no se pudieron obtener.";
+    }
+  } catch (e: any) {
     console.error("Error al cargar tarjetas:", e);
-    error.value = "Error al cargar las tarjetas";
+    const message =
+      e.description || e.message || "Error crítico al cargar las tarjetas.";
+    errorTarjeta.value = message;
+    snackbarStore.showError(message);
+    if (e.code === 97) {
+      // Unauthorized or similar
+      snackbarStore.showError("Sesión expirada. Redirigiendo al login.");
+      router.push("/login");
+    }
   } finally {
     loadingCards.value = false;
   }
 }
 
 function irAConfirmacion() {
-  if (!isValid.value) return;
+  if (!isValid.value) {
+    if (!identificador.value.trim()) {
+      snackbarStore.showError("Por favor, ingrese un identificador de pago.");
+    } else if (origen.value === "card" && !selectedCard.value) {
+      snackbarStore.showError("Por favor, seleccione una tarjeta.");
+      errorTarjeta.value = "Debe seleccionar una tarjeta";
+    }
+    return;
+  }
+  errorLocal.value = "";
 
   const selectedCardInfo =
     origen.value === "card" ? getSelectedCardDisplay() : null;
 
   router.push({
-    path: "/ConfirmPayment",
+    path: "/ConfirmPayment", // Using path as a fallback
     query: {
-      id: identificador.value,
-      metodo: origen.value,
-      cardId: selectedCard.value,
-      cardInfo: selectedCardInfo,
+      paymentId: identificador.value,
+      method: origen.value,
+      cardId: selectedCard.value || undefined,
+      cardInfo: selectedCardInfo || undefined,
     },
   });
 }
@@ -220,13 +312,23 @@ function irAConfirmacion() {
   align-items: center;
 }
 
-.compact-select :deep(.v-field__input) {
-  min-height: 32px !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
+.compact-select :deep(.v-input__control .v-field__input) {
+  min-height: 40px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  font-size: 0.9rem;
+}
+.compact-select :deep(.v-label.v-field-label) {
+  font-size: 0.9rem;
+  margin-top: -2px;
+}
+.compact-select :deep(.v-field__append-inner .v-icon) {
+  font-size: 1.2rem;
 }
 
-.compact-select :deep(.v-field) {
-  font-size: 0.875rem;
+@media (max-width: 600px) {
+  .container-card {
+    padding: 16px;
+  }
 }
 </style>
