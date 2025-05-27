@@ -36,7 +36,7 @@
             variant="text"
             class="align-self-start ml-0 mt-0"
             />
-            <h1 class="mb-2">Ayuda</h1>
+            <h1 class="mb-2">Tutoriales de uso</h1>
             <v-divider class="mb-2" :thickness="2"/>
           <div
             v-for="section in sections"
@@ -102,6 +102,12 @@ const sections = [
           "Elegí esta opción para ver la lista de transacciones realizadas.",
         image: "/src/assets/pasos/movimientos-indicado.png",
       },
+      {
+        title: 'Navega a través de tus movimientos',
+        content:
+          "Utiliza los filtros disponibles para ver tu historial de pagos.",
+        image: null,
+      },
     ],
   },
   {
@@ -118,8 +124,8 @@ const sections = [
       },
       {
         title: 'Seleccioná "Ingresar Dinero"',
-        content: "Una vez dentro, se verá la opción de .",
-        image: null,
+        content: "Una vez dentro, se verá la opción de ingresar dinero en la barra inferior.",
+        image: "/src/assets/pasos/ingresar-indicado.png",
       },
       {
         title: "Elegí el método de ingreso",
@@ -145,14 +151,14 @@ const sections = [
       "Realizá transferencias a otras cuentas de manera rápida y segura dentro de la aplicación.",
     steps: [
       {
-        title: "Accedé al menú principal",
-        content: "Hacé clic en el ícono para desplegar las opciones.",
+        title: "Accedé al menú de inicio",
+        content: "Tocá el ícono de Walletuce en la parte superior de la pantalla para volver al inicio.",
         image: null,
       },
       {
         title: 'Seleccioná "Transferir Dinero"',
         content: "Esta opción te llevará al formulario de transferencia.",
-        image: null,
+        image: "/src/assets/pasos/transferir-indicado.png",
       },
       {
         title: "Completá los datos del destinatario",
@@ -175,17 +181,17 @@ const sections = [
     id: "generar-cobro",
     title: "Generar Cobro",
     description:
-      "Solicitá pagos enviando un enlace o generando un código QR para que otra persona te transfiera dinero.",
+      "Solicitá pagos enviando un identificador de pago.",
     steps: [
       {
-        title: "Ingresá al menú",
-        content: "Desde el ícono de menú, accedé a las opciones principales.",
+        title: "Ingresá al menú de inicio",
+        content: "Tocá el ícono de Walletuce en la parte superior de la pantalla para volver al inicio.",
         image: null,
       },
       {
         title: 'Seleccioná "Generar Cobro"',
         content: "Elegí esta opción para comenzar.",
-        image: null,
+        image: "/src/assets/pasos/generar-indicado.png",
       },
       {
         title: "Completá los datos del cobro",
@@ -193,8 +199,8 @@ const sections = [
         image: null,
       },
       {
-        title: "Generá el QR o link de cobro",
-        content: "Compartí el enlace o código para que te paguen.",
+        title: "Generá el identificador de pago",
+        content: "Compartí el identificador para que te paguen.",
         image: null,
       },
     ],
@@ -203,21 +209,21 @@ const sections = [
     id: "realizar-pago",
     title: "Realizar Pago",
     description:
-      "Pagá productos o servicios usando tu saldo disponible o una tarjeta asociada desde la app.",
+      "Pagá productos o servicios usando tu saldo disponible o una tarjeta asociada desde la aplicación.",
     steps: [
       {
-        title: "Abrí el menú",
-        content: "Tocá el menú para ver las funcionalidades.",
+        title: "Abrí el menú de inicio",
+        content: "Tocá el ícono de Walletuce en la parte superior de la pantalla para volver al inicio.",
         image: null,
       },
       {
         title: 'Seleccioná "Realizar Pago"',
         content: "Elegí esta opción para iniciar un pago.",
-        image: null,
+        image: "/src/assets/pasos/realizar-indicado.png",
       },
       {
-        title: "Escaneá un código QR o ingresá los datos del comercio",
-        content: "Podés pagar con QR o manualmente.",
+        title: "Ingresá el identificador de pago",
+        content: "Podés pagar con saldo en cuenta o usando una tarjeta.",
         image: null,
       },
       {
@@ -231,22 +237,22 @@ const sections = [
     id: "administrar-tarjetas",
     title: "Administrar Tarjetas",
     description:
-      "Gestioná las tarjetas asociadas a tu cuenta: agregá nuevas, modificá datos o eliminá las que ya no usás.",
+      "Gestioná las tarjetas asociadas a tu cuenta: agregá nuevas o eliminá las que ya no usás.",
     steps: [
       {
-        title: "Abrí el menú principal",
-        content: "Ingresá al menú desde el ícono correspondiente.",
+        title: "Abrí el menú de inicio",
+        content: "Tocá el ícono de Walletuce en la parte superior de la pantalla para volver al inicio.",
         image: null,
       },
       {
         title: 'Seleccioná "Administrar Tarjetas"',
         content: "Ingresá a la sección para ver tus tarjetas registradas.",
-        image: null,
+        image: "/src/assets/pasos/tarjetas-indicado.png",
       },
       {
         title: "Gestioná tus tarjetas",
         content:
-          "Podés agregar una nueva tarjeta, editar una existente o eliminarla.",
+          "Podés agregar una nueva tarjeta o eliminarla presionando encima de la misma.",
         image: null,
       },
     ],
