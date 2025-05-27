@@ -83,15 +83,20 @@ const monto_ingresado = ref(Number(route.query.monto || 0)); // valor inicial re
 const monto_formateado = computed(() => formatearDinero(monto_ingresado.value));
 
 const origen = route.query.origen || "tarjeta";
+const cardId = route.query.cardId || "";
+const cvu = route.query.cvu || "";
+const cardDisplay = route.query.cardDisplay || "";
 
-// Derivar textos para mostrar
-const fuente = computed(() =>
-  origen === "cuenta" ? "Cuenta Bancaria" : "Tarjeta"
-);
+const detalle_fuente = computed(() => {
+  if (origen === "cuenta" && cvu) {
+    return `CBU •••• ${String(cvu).slice(-4)}`;
+  }
+  if (origen === "tarjeta" && cardDisplay) {
+    return cardDisplay;
+  }
+  return "";
+});
 
-const detalle_fuente = computed(() =>
-  origen === "cuenta" ? "CBU ***0001" : "**** 1234"
-);
 
 // Acciones
 function onVolverHomeClick() {

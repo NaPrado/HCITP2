@@ -12,7 +12,6 @@ declare module 'vue' {
     BackButton: typeof import('./components/BackButton.vue')['default']
     CardSelector: typeof import('./components/CardSelector.vue')['default']
     LettucePatternBackground: typeof import('./components/LettucePatternBackground.vue')['default']
-    LettucesPatern: typeof import('./components/lettuces-patern.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

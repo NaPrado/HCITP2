@@ -30,6 +30,14 @@
       <!-- Contenido scrollable -->
       <div class="help-scrollable-content">
         <v-container fluid class="help-content mt-4">
+            <BackButton
+            size="large"
+            to="/HomePage"
+            variant="text"
+            class="align-self-start ml-0 mt-0"
+            />
+            <h1 class="mb-2">Ayuda</h1>
+            <v-divider class="mb-2" :thickness="2"/>
           <div
             v-for="section in sections"
             :key="section.id"

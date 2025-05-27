@@ -78,6 +78,16 @@
               variant="outlined"
               hide-details
             ></v-select>
+            <v-text-field
+              v-if="origen === 'cuenta'"
+              v-model="cvuCuenta"
+              label="Ingrese el CBU"
+              placeholder="0000000000000000000000"
+              class="mt-2 compact-select"
+              variant="outlined"
+              hide-details
+              density="compact"
+            />
           </v-card>
 
           <!-- Botones -->
@@ -109,6 +119,8 @@ import { onMounted } from "vue";
 const router = useRouter();
 const snackbar = ref(false);
 const mensajeError = ref("");
+const cvuCuenta = ref("");
+
 
 const monto = ref("");
 
@@ -198,14 +210,22 @@ function onCrearClick() {
     snackbar.value = true;
     return;
   }
+  if (origen.value === "cuenta" && (!cvuCuenta.value || cvuCuenta.value.length !== 22)) {
+    mensajeError.value = "Ingresá un CBU válido (debe contener veintidós dígitos)";
+    snackbar.value = true;
+    return;
+  }
   router.push({
-    path: "./ConfirmDeposit",
-    query: {
-      monto: monto.value,
-      origen: origen.value,
-      cardId: selectedCard.value,
-    },
-  });
+  path: "./ConfirmDeposit",
+  query: {
+    monto: monto.value,
+    origen: origen.value,
+    cardId: selectedCard.value,
+    cardDisplay: cards.value.find(c => c.id === selectedCard.value)?.displayName || "",
+    cvu: cvuCuenta.value,
+  },
+});
+
 }
 </script>
 <style scoped>
