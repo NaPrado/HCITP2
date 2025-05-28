@@ -67,13 +67,13 @@
 
           <!-- ID de pago generado (se puede mostrar de otra forma o con snackbar) -->
           <v-alert
-            v-if="paymentId && showPaymentIdAlert"
+            v-if="paymentUuid && showPaymentIdAlert"
             type="success"
             class="mb-4"
             closable
             @click:close="showPaymentIdAlert = false"
           >
-            ID de pago generado: {{ paymentId }}
+            ID de pago generado: {{ paymentUuid }}
           </v-alert>
 
           <!-- Botones -->
@@ -106,6 +106,7 @@ import { PaymentsService } from "../api/payments.js";
 import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
 import { useSnackbarStore } from "../stores/snackbar"; // Importar el store global de snackbar
+import { encodePaymentJSON } from "../utils/jsonEncoder";
 
 const router = useRouter();
 const snackbarStore = useSnackbarStore(); // Usar el store global
@@ -116,7 +117,7 @@ const errorLocal = ref(""); // Renombrado para evitar conflicto con error de eve
 const errorMonto = ref("");
 const errorDescripcion = ref("");
 const procesando = ref(false);
-const paymentId = ref("");
+const paymentUuid = ref("");
 const showPaymentIdAlert = ref(false); // Para controlar la visibilidad del alert de ID de pago
 
 // Validación
@@ -128,120 +129,78 @@ const isValid = computed(() => {
 
 async function generarCobro() {
   if (!isValid.value) {
-    // Validar campos individuales también para mostrar errores en los text-fields
     if (!monto.value || parseFloat(monto.value) <= 0) {
       errorMonto.value = "Ingrese un monto válido y mayor a cero.";
     }
-    // No es necesario un snackbar aquí si los errores se muestran en los campos
     return null;
   }
 
   errorLocal.value = "";
   errorMonto.value = "";
-  errorDescripcion.value = ""; // Limpiar error de descripción si se implementa validación
-  showPaymentIdAlert.value = false; // Ocultar alerta de ID de pago anterior
+  errorDescripcion.value = "";
+  showPaymentIdAlert.value = false;
 
   try {
     const paymentData = {
       amount: parseFloat(monto.value),
-      description: descripcion.value || "", // Asegurar que la descripción no sea undefined
+      description: descripcion.value.trim() || "Cobro generado",
     };
 
     const response = await PaymentsService.createPaymentRequest(paymentData);
 
-    if (!response || !response.id) {
-      throw new Error(
-        "La respuesta del servidor no incluye un ID de pago válido."
-      );
+    if (!response || !response.uuid) {
+      throw new Error("La respuesta del servidor no incluye un UUID de pago válido.");
     }
 
-    paymentId.value = response.id; // Guardar el ID
-    showPaymentIdAlert.value = true; // Mostrar la alerta con el ID
-    snackbarStore.showSuccess(
-      `¡Cobro generado exitosamente! ID: ${response.id}`
-    );
+    paymentUuid.value = response.uuid;
+    showPaymentIdAlert.value = true;
+    snackbarStore.showSuccess("¡Cobro generado exitosamente! Copie el UUID para compartirlo.");
 
-    return response; // Devolver la respuesta completa
-  } catch (e: any) {
-    // Tipar error como any para acceder a sus propiedades
+    return response;
+  } catch (e) {
     console.error("Error al generar cobro:", e);
     if (e.code === 97) {
-      // Asumiendo que 97 es no autorizado
-      snackbarStore.showError(
-        e.description || "Sesión expirada. Por favor, inicie sesión nuevamente."
-      );
+      snackbarStore.showError(e.description || "Sesión expirada. Por favor, inicie sesión nuevamente.");
       router.push("/login");
     } else {
-      const message =
-        e.description || e.message || "Error desconocido al generar el cobro.";
-      errorLocal.value = message; // Mostrar error en el v-alert local
-      snackbarStore.showError(message); // Y también en el snackbar global
+      const message = e.description || e.message || "Error desconocido al generar el cobro.";
+      errorLocal.value = message;
+      snackbarStore.showError(message);
     }
     return null;
   }
 }
 
 async function onCopiarCodigoClick() {
-  // Primero, asegurar que los campos son válidos para generar el cobro si aún no se ha hecho
   if (!monto.value || parseFloat(monto.value) <= 0) {
-    errorMonto.value =
-      "Ingrese un monto válido para generar y copiar el código.";
+    errorMonto.value = "Ingrese un monto válido para generar y copiar el código.";
     snackbarStore.showError("Por favor, ingrese un monto válido.");
     return;
-  }
-  if (!descripcion.value.trim()) {
-    // Ejemplo de validación para descripción
-    errorDescripcion.value = "La descripción es recomendable para el cobro.";
-    // podrías mostrar un snackbar de advertencia o permitir continuar
   }
 
   procesando.value = true;
   let paymentToCopy = null;
 
-  // Si ya tenemos un paymentId y es del monto/descripción actual, no regenerar.
-  // Esta lógica puede ser más compleja si se quiere evitar regenerar innecesariamente.
-  // Por simplicidad, aquí siempre intentaremos generar uno nuevo si no hay ID o lo limpiaremos.
-  if (!paymentId.value) {
-    // O si el monto/descripción cambió desde la última generación
+  if (!paymentUuid.value) {
     paymentToCopy = await generarCobro();
   } else {
-    // Asumimos que el paymentId existente es el que queremos copiar
-    paymentToCopy = { id: paymentId.value };
+    paymentToCopy = {
+      uuid: paymentUuid.value,
+      amount: parseFloat(monto.value),
+      description: descripcion.value.trim() || "Cobro generado"
+    };
   }
 
-  if (paymentToCopy && paymentToCopy.id) {
-    const paymentCode = paymentToCopy.id;
+  if (paymentToCopy && paymentToCopy.uuid) {
     try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(paymentCode);
-        snackbarStore.showSuccess("Código de pago copiado al portapapeles.");
-      } else {
-        // Fallback para HTTP o contextos no seguros / navegadores antiguos
-        const textArea = document.createElement("textarea");
-        textArea.value = paymentCode;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-          document.execCommand("copy");
-          snackbarStore.showSuccess("Código de pago copiado (fallback).");
-        } catch (err) {
-          console.error("Fallback copy failed:", err);
-          snackbarStore.showError(`No se pudo copiar. Código: ${paymentCode}`);
-        }
-        document.body.removeChild(textArea);
-      }
+      // Codificar el objeto de pago
+      const encodedPayment = encodePaymentJSON(paymentToCopy);
+      await navigator.clipboard.writeText(encodedPayment);
+      snackbarStore.showSuccess("Código de pago copiado al portapapeles.");
     } catch (err) {
-      console.error("Copying to clipboard failed:", err);
-      snackbarStore.showError(`Error al copiar. Código: ${paymentCode}`);
+      console.error("Error al copiar al portapapeles:", err);
+      snackbarStore.showError("No se pudo copiar el código de pago.");
     }
-  } else if (!errorLocal.value && !errorMonto.value) {
-    // Solo mostrar error de copia si no hubo error de generación
-    snackbarStore.showError(
-      "No se pudo generar el código de pago para copiar."
-    );
   }
   procesando.value = false;
 }

@@ -227,6 +227,57 @@
           </v-card-actions>
         </v-card>
       </v-dialog>
+
+      <!-- Modal de éxito -->
+      <v-dialog v-model="dialogoExito" max-width="500">
+        <v-card class="bg-grey-lighten-2" rounded="lg">
+          <v-card
+            class="ma-4 card-with-shadow-medium"
+            color="green-lighten-1"
+            rounded="lg"
+          >
+            <v-card-title class="text-white font-weight-bold pa-4">
+              ¡Pago realizado con éxito!
+            </v-card-title>
+          </v-card>
+
+          <v-card-text class="pa-4">
+            <v-card
+              class="pa-4 mb-4 bg-grey-lighten-3 card-with-shadow-light"
+              rounded="lg"
+            >
+              <v-list-item>
+                <template v-slot:prepend>
+                  <v-icon color="green-lighten-1">mdi-cash</v-icon>
+                </template>
+                <v-list-item-title class="font-weight-bold"
+                  >Monto pagado</v-list-item-title
+                >
+                <v-list-item-subtitle class="text-h6"
+                  >${{ paymentInfo?.amount || "0" }}</v-list-item-subtitle
+                >
+              </v-list-item>
+            </v-card>
+
+            <v-card
+              class="pa-4 bg-grey-lighten-3 card-with-shadow-light"
+              rounded="lg"
+            >
+              <v-list-item>
+                <template v-slot:prepend>
+                  <v-icon color="green-lighten-1">mdi-credit-card</v-icon>
+                </template>
+                <v-list-item-title class="font-weight-bold"
+                  >Método utilizado</v-list-item-title
+                >
+                <v-list-item-subtitle>
+                  {{ metodo === "balance" ? "Saldo" : `Tarjeta: ${cardInfo}` }}
+                </v-list-item-subtitle>
+              </v-list-item>
+            </v-card>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
     </v-container>
   </v-app>
 </template>
@@ -236,95 +287,90 @@ import { useRouter, useRoute } from "vue-router";
 import { ref, onMounted } from "vue";
 import { PaymentsService } from "../api/payments.js";
 import AppHeader from "../components/AppHeader.vue";
-import { Api } from "../api/api.js";
 import BackButton from "../components/BackButton.vue";
+import { useSnackbarStore } from "../stores/snackbar";
+import { decodePaymentJSON } from "../utils/jsonEncoder";
+import { useUserStore } from "../stores/user";
 
-const router = useRouter();
 const route = useRoute();
+const router = useRouter();
+const snackbarStore = useSnackbarStore();
+const userStore = useUserStore();
 
-const metodo = ref(route.query.metodo || "balance");
-const cardInfo = ref(route.query.cardInfo || "");
-const cardId = ref(route.query.cardId || "");
-const paymentId = ref(route.query.id || "");
+const validando = ref(true);
 const error = ref("");
-const procesando = ref(false);
-const validando = ref(false);
 const paymentInfo = ref(null);
 const dialogoConfirmacion = ref(false);
+const dialogoExito = ref(false);
+const metodo = ref(route.query.method || "balance");
+const cardInfo = ref("");
+const procesando = ref(false);
 
 onMounted(async () => {
-  if (!paymentId.value) {
-    error.value = "ID de pago no proporcionado";
-    return;
-  }
-
-  await validarPago();
-});
-
-async function validarPago() {
-  validando.value = true;
-  error.value = "";
-
   try {
-    const response = await PaymentsService.getPaymentInfo(paymentId.value);
-    console.log(response);
-    paymentInfo.value = response;
-  } catch (e) {
-    console.error("Error al obtener información del pago:", e);
-    if (e.code === 97 && e.description === "Unauthorized.") {
-      Api.token = null;
-      router.push("/login");
-      return;
+    const encodedPayment = route.query.code;
+    if (!encodedPayment) {
+      throw new Error("No se proporcionó un código de pago válido");
     }
-    error.value = "ID de pago no válido";
-    paymentInfo.value = null;
-  } finally {
+
+    // Decodificar el pago
+    paymentInfo.value = decodePaymentJSON(encodedPayment);
+    validando.value = false;
+  } catch (e) {
+    console.error("Error al decodificar el pago:", e);
+    error.value = e.message || "Error al decodificar el código de pago";
     validando.value = false;
   }
-}
+});
 
-function onVolverClick() {
-  router.push("./MakePaymentPage");
-}
-
-function mostrarConfirmacion() {
-  dialogoConfirmacion.value = true;
-}
 async function onPagarClick() {
   procesando.value = true;
   error.value = "";
 
   try {
-    if (!paymentInfo.value || !paymentInfo.value.uuid) {
-      error.value = "Información de pago no válida";
-      return;
+    if (!paymentInfo.value?.uuid) {
+      throw new Error("Información de pago no válida");
     }
 
     const paymentData = {};
-    if (metodo.value === "card") {
-      paymentData.cardId = cardId.value;
+    if (metodo.value === "card" && route.query.cardId) {
+      paymentData.cardId = route.query.cardId;
     }
 
     await PaymentsService.makePayment(paymentInfo.value.uuid, paymentData);
+    
+    // Update balance if payment was made from balance
+    if (metodo.value === "balance") {
+      await userStore.fetchUserProfile(); // Refresh user data including balance
+    }
+    
     dialogoConfirmacion.value = false;
-    router.push({
-      path: "/PaymentSuccess",
-      query: {
-        amount: paymentInfo.value.amount,
-        method: metodo.value,
-      },
-    });
+    dialogoExito.value = true;
+    snackbarStore.showSuccess("¡Pago realizado con éxito!");
+    
+    // Cerrar el modal y redirigir después de 2 segundos
+    setTimeout(() => {
+      dialogoExito.value = false;
+      router.push("/HomePage");
+    }, 2000);
   } catch (e) {
     console.error("Error al procesar el pago:", e);
-    if (e.code === 97 && e.description === "Unauthorized.") {
-      Api.token = null;
-      router.push("/login");
-    } else {
-      error.value = e.description || "Error al procesar el pago";
-    }
+    error.value = e.message || "Error al procesar el pago";
   } finally {
     procesando.value = false;
   }
+}
+
+function mostrarConfirmacion() {
+  if (!paymentInfo.value) {
+    error.value = "No hay información de pago válida";
+    return;
+  }
+  dialogoConfirmacion.value = true;
+}
+
+function onVolverClick() {
+  router.push("/MakePaymentPage");
 }
 </script>
 

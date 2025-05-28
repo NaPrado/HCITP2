@@ -26,7 +26,7 @@
             <div class="d-flex align-center">
               <v-text-field
                 v-model="identificador"
-                placeholder="ID de pago"
+                placeholder="UUID de pago"
                 hide-details
                 class="ml-2 mr-2 bg-grey-lighten-4"
               ></v-text-field>
@@ -96,21 +96,29 @@ import { useRouter } from "vue-router";
 import { ref, computed, watch } from "vue";
 import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
-import CardSelector from "../components/CardSelector.vue"; // Importar el componente
+import CardSelector from "../components/CardSelector.vue";
 import { useSnackbarStore } from "../stores/snackbar";
+import { PaymentsService } from "../api/payments.js";
+import { decodePaymentJSON } from "../utils/jsonEncoder";
 
 const router = useRouter();
 const snackbarStore = useSnackbarStore();
 
 const identificador = ref("");
-const origen = ref<"balance" | "card">("balance");
-const selectedCard = ref<string | null>(null); // ID de la tarjeta seleccionada
-const errorLocal = ref(""); // Para errores generales en esta página
+const origen = ref("balance");
+const selectedCard = ref(null);
+const errorLocal = ref("");
 
 const isValid = computed(() => {
-  if (!identificador.value.trim()) return false;
-  if (origen.value === "card" && !selectedCard.value) return false;
-  return true;
+  try {
+    if (!identificador.value.trim()) return false;
+    // Intentar decodificar el código para validar que es correcto
+    const decodedPayment = decodePaymentJSON(identificador.value);
+    if (origen.value === "card" && !selectedCard.value) return false;
+    return true;
+  } catch (error) {
+    return false;
+  }
 });
 
 watch(origen, (newValue) => {
@@ -126,10 +134,8 @@ watch(origen, (newValue) => {
 function irAConfirmacion() {
   if (!isValid.value) {
     if (!identificador.value.trim()) {
-      snackbarStore.showError("Por favor, ingrese un identificador de pago.");
+      snackbarStore.showError("Por favor, ingrese un código de pago válido.");
     } else if (origen.value === "card" && !selectedCard.value) {
-      // El CardSelector debería mostrar su propio error si es un problema de carga.
-      // Este error es si el usuario simplemente no seleccionó una.
       snackbarStore.showError("Por favor, seleccione una tarjeta.");
     }
     return;
@@ -139,7 +145,7 @@ function irAConfirmacion() {
   router.push({
     path: "/ConfirmPayment",
     query: {
-      paymentId: identificador.value,
+      code: identificador.value,
       method: origen.value,
       cardId: selectedCard.value || undefined,
     },
