@@ -65,16 +65,6 @@
             {{ errorLocal }}
           </v-alert>
 
-          <!-- ID de pago generado (se puede mostrar de otra forma o con snackbar) -->
-          <v-alert
-            v-if="paymentUuid && showPaymentIdAlert"
-            type="success"
-            class="mb-4"
-            closable
-            @click:close="showPaymentIdAlert = false"
-          >
-            ID de pago generado: {{ paymentUuid }}
-          </v-alert>
 
           <!-- Botones -->
           <v-row class="mt-4 mb-1 mr-1" justify="end">
@@ -193,7 +183,6 @@ async function onCopiarCodigoClick() {
 
   if (paymentToCopy && paymentToCopy.uuid) {
     try {
-      // Codificar el objeto de pago
       const encodedPayment = encodePaymentJSON(paymentToCopy);
       await navigator.clipboard.writeText(encodedPayment);
       snackbarStore.showSuccess("Código de pago copiado al portapapeles.");
@@ -202,8 +191,13 @@ async function onCopiarCodigoClick() {
       snackbarStore.showError("No se pudo copiar el código de pago.");
     }
   }
+
   procesando.value = false;
+
+  // 🔁 Redirigir al HomePage
+  router.push("/HomePage");
 }
+
 </script>
 
 <style scoped>

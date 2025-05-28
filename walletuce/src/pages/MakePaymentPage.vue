@@ -26,7 +26,7 @@
             <div class="d-flex align-center">
               <v-text-field
                 v-model="identificador"
-                placeholder="UUID de pago"
+                placeholder="Codigo de pago"
                 hide-details
                 class="ml-2 mr-2 bg-grey-lighten-4"
               ></v-text-field>
