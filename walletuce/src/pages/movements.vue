@@ -64,8 +64,8 @@
                 v-model="filters.role"
                 :items="[
                   { title: 'Todos', value: null },
-                  { title: 'Pagos realizados', value: 'PAYER' },
-                  { title: 'Pagos recibidos', value: 'RECEIVER' },
+                  { title: 'Ingresos', value: 'RECEIVER' },
+                  { title: 'Egresos', value: 'PAYER' },
                 ]"
                 label="Tipo"
                 density="comfortable"
@@ -84,36 +84,42 @@
                 v-for="movement in movements"
                 :key="movement.id"
                 class="mb-3 pa-3 rounded-lg movimiento-card"
+                :class="{
+                  'movimiento-ingreso': isIncome(movement),
+                  'movimiento-egreso': isExpense(movement)
+                }"
                 flat
               >
                 <div class="d-flex justify-space-between align-center">
                   <div>
-                    <div class="text-subtitle-1 font-weight-bold text-black">
-                      {{ movement.description || "Sin descripción" }}
+                    <div class="d-flex align-center">
+                      <v-icon
+                        :color="isIncome(movement) ? 'green-darken-2' : 'red-darken-2'"
+                        class="mr-2"
+                      >
+                        {{ isIncome(movement) ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+                      </v-icon>
+                      <div class="text-subtitle-1 font-weight-bold text-black">
+                        {{ getMovementDescription(movement) }}
+                      </div>
                     </div>
                     <div class="text-body-2 text-grey">
-                      {{ formatDate(movement.date) }}
+                      {{ formatDate(movement.createdAt) }}
                     </div>
                     <div class="text-caption text-grey-darken-1">
                       {{ movement.method === "ACCOUNT" ? "Cuenta" : "Tarjeta" }}
                       <v-chip
                         size="x-small"
-                        :color="
-                          movement.status === 'PENDING' ? 'warning' : 'success'
-                        "
+                        :color="movement.pending ? 'warning' : 'success'"
                         class="ml-2"
                       >
-                        {{
-                          movement.status === "PENDING"
-                            ? "Pendiente"
-                            : "Confirmado"
-                        }}
+                        {{ movement.pending ? "Pendiente" : "Confirmado" }}
                       </v-chip>
                     </div>
                   </div>
                   <div
                     class="text-subtitle-1 font-weight-bold"
-                    :class="getAmountClass(movement)"
+                    :class="isIncome(movement) ? 'text-green' : 'text-red'"
                   >
                     {{ formatAmount(movement) }}
                   </div>
@@ -168,16 +174,30 @@ import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
 import { PaymentsService, type PaymentQueryParams } from "../api/payments.js";
 import { useSnackbarStore } from "../stores/snackbar";
+import { UserApi } from "../api/user";
 
 interface Movement {
-  id: string;
-  amount: number;
+  id: number;
   description: string;
-  date: string;
-  role: "PAYER" | "RECEIVER";
-  method: "ACCOUNT" | "CARD" | null;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED";
-  relatedAccount?: string;
+  amount: number;
+  pending: boolean;
+  uuid: string | null;
+  method: "ACCOUNT" | "CARD";
+  payer: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+  receiver: {
+    id: number;
+    firstName: string;
+    lastName: string;
+  };
+  card: {
+    id: number;
+    number: string;
+  } | null;
+  metadata: object | null;
 }
 
 const router = useRouter();
@@ -187,6 +207,7 @@ const movements = ref<Movement[]>([]);
 const currentPage = ref(1);
 const totalPages = ref(1);
 const itemsPerPage = 10;
+const currentUserId = ref<number | null>(null);
 
 const filters = ref<{
   direction: "ASC" | "DESC";
@@ -207,6 +228,14 @@ const filters = ref<{
 async function loadMovements() {
   loading.value = true;
   try {
+    // Obtener el ID del usuario actual si no lo tenemos
+    if (!currentUserId.value) {
+      const userResponse = await UserApi.get();
+      if (userResponse && userResponse.id) {
+        currentUserId.value = userResponse.id;
+      }
+    }
+
     const queryParams: PaymentQueryParams = {
       page: currentPage.value,
       direction: filters.value.direction,
@@ -228,21 +257,36 @@ async function loadMovements() {
       queryParams.cardId = filters.value.cardId;
     }
 
+    console.log('Cargando movimientos con filtros:', queryParams);
     const response = await PaymentsService.getPayments(queryParams);
+    console.log('Respuesta de la API:', response);
 
     if (response && Array.isArray(response.results)) {
-      movements.value = response.results as Movement[];
-      totalPages.value =
-        response.paging?.totalPages ||
-        (response.results.length > 0
-          ? Math.ceil(response.results.length / itemsPerPage)
-          : 1);
+      // Filtrar los resultados según el rol seleccionado
+      let filteredResults = response.results;
+      if (filters.value.role) {
+        filteredResults = response.results.filter(movement => {
+          if (filters.value.role === 'RECEIVER') {
+            return movement.receiver.id === currentUserId.value;
+          } else if (filters.value.role === 'PAYER') {
+            return movement.payer.id === currentUserId.value;
+          }
+          return true;
+        });
+      }
+
+      movements.value = filteredResults as Movement[];
+      totalPages.value = Math.ceil(filteredResults.length / itemsPerPage);
+      
       if (currentPage.value > totalPages.value && totalPages.value > 0) {
         currentPage.value = totalPages.value;
       }
-      if (totalPages.value === 0 && response.results.length === 0)
+      if (totalPages.value === 0 && filteredResults.length === 0) {
         totalPages.value = 1;
-      if (response.results.length === 0) currentPage.value = 1;
+      }
+      if (filteredResults.length === 0) {
+        currentPage.value = 1;
+      }
     } else {
       movements.value = [];
       totalPages.value = 1;
@@ -262,6 +306,22 @@ async function loadMovements() {
   }
 }
 
+const isIncome = (movement: Movement) => {
+  return movement.receiver?.id === currentUserId.value;
+};
+
+const isExpense = (movement: Movement) => {
+  return movement.payer?.id === currentUserId.value;
+};
+
+const getMovementDescription = (movement: Movement) => {
+  if (isIncome(movement)) {
+    return `Recibido de ${movement.payer.firstName} ${movement.payer.lastName}`;
+  } else {
+    return `Enviado a ${movement.receiver.firstName} ${movement.receiver.lastName}`;
+  }
+};
+
 watch(
   [() => ({ ...filters.value }), () => currentPage.value],
   ([newFilters, newPage], [oldFilters, oldPage]) => {
@@ -269,11 +329,8 @@ watch(
       JSON.stringify(newFilters) !== JSON.stringify(oldFilters);
 
     if (filtersActuallyChanged) {
-      if (currentPage.value !== 1) {
-        currentPage.value = 1;
-      } else {
-        loadMovements();
-      }
+      currentPage.value = 1;
+      loadMovements();
     } else if (newPage !== oldPage) {
       loadMovements();
     }
@@ -314,17 +371,44 @@ function formatDate(dateString: string) {
 }
 
 function getAmountClass(movement: Movement) {
-  if (movement.role === "PAYER") return "text-red";
-  return "text-green";
+  return isIncome(movement) ? "text-green" : "text-red";
 }
 
 function formatAmount(movement: Movement) {
-  const amount = movement.role === "PAYER" ? -movement.amount : movement.amount;
+  const amount = isIncome(movement) ? movement.amount : -movement.amount;
   return formatCurrency(amount);
 }
 </script>
 
 <style scoped>
+.movimiento-card {
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.movimiento-ingreso {
+  background-color: #f1f8e9 !important;
+  border-color: #c8e6c9 !important;
+}
+
+.movimiento-egreso {
+  background-color: #ffebee !important;
+  border-color: #ffcdd2 !important;
+}
+
+.movimiento-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.text-red {
+  color: rgb(216, 99, 91) !important;
+}
+
+.text-green {
+  color: #4caf50 !important;
+}
+
 .monto-card {
   justify-content: center;
   align-items: center;
@@ -427,14 +511,6 @@ function formatAmount(movement: Movement) {
 
 .movimiento-card:hover {
   background-color: rgb(237, 237, 237) !important;
-}
-
-.text-red {
-  color: rgb(216, 99, 91) !important;
-}
-
-.text-green {
-  color: #4caf50 !important;
 }
 
 .no-movements {
