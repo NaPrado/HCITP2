@@ -106,17 +106,16 @@
                         {{ getMovementDescription(movement) }}
                       </div>
                     </div>
-                    <div class="text-body-2 text-grey">
-                      {{ formatDate(movement.createdAt) }}
-                    </div>
                     <div class="text-caption text-grey-darken-1">
-                      {{ movement.method === "ACCOUNT" ? "Cuenta" : "Tarjeta" }}
+                      <template v-if="!movement.pending">
+                        {{ movement.method === "ACCOUNT" ? "Cuenta" : "Tarjeta" }}
+                      </template>
                       <v-chip
                         size="x-small"
                         :color="movement.pending ? 'warning' : 'success'"
                         class="ml-2"
                       >
-                        {{ movement.pending ? "Pendiente" : "Confirmado" }}
+                        {{ movement.pending ? "Cobro" : "Confirmado" }}
                       </v-chip>
                     </div>
                   </div>
@@ -320,7 +319,7 @@ const isExpense = (movement: Movement) => {
 
 const getMovementDescription = (movement: Movement) => {
   if (isIncome(movement)) {
-    return `Recibido de ${movement.payer?.firstName || 'Usuario'} ${movement.payer?.lastName || ''}`;
+    return `Transacción de ${movement.payer?.firstName || 'Usuario'} ${movement.payer?.lastName || ''}`;
   } else {
     return `Enviado a ${movement.receiver?.firstName || 'Usuario'} ${movement.receiver?.lastName || ''}`;
   }
