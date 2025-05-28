@@ -8,11 +8,14 @@
       <v-container
         class="d-flex flex-column align-center justify-center main-content pt-16"
       >
-        <BackButton
-          to="/HomePage"
+        <v-btn
           variant="text"
-          class="align-self-start ml-4 mt-4"
-        />
+          class="align-self-start ml-4 mt-4 back-btn"
+          @click="goToHome"
+        >
+          <v-icon size="20" class="mr-1">mdi-arrow-left</v-icon>
+          Volver
+        </v-btn>
 
         <!-- Filtros -->
         <v-card class="mb-4 pa-4 container-card" rounded="lg">
@@ -171,7 +174,6 @@
 import { ref, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import AppHeader from "../components/AppHeader.vue";
-import BackButton from "../components/BackButton.vue";
 import { PaymentsService, type PaymentQueryParams } from "../api/payments.js";
 import { useSnackbarStore } from "../stores/snackbar";
 import { UserApi } from "../api/user";
@@ -266,6 +268,8 @@ async function loadMovements() {
       let filteredResults = response.results;
       if (filters.value.role) {
         filteredResults = response.results.filter(movement => {
+          if (!movement.payer || !movement.receiver) return false;
+          
           if (filters.value.role === 'RECEIVER') {
             return movement.receiver.id === currentUserId.value;
           } else if (filters.value.role === 'PAYER') {
@@ -316,9 +320,9 @@ const isExpense = (movement: Movement) => {
 
 const getMovementDescription = (movement: Movement) => {
   if (isIncome(movement)) {
-    return `Recibido de ${movement.payer.firstName} ${movement.payer.lastName}`;
+    return `Recibido de ${movement.payer?.firstName || 'Usuario'} ${movement.payer?.lastName || ''}`;
   } else {
-    return `Enviado a ${movement.receiver.firstName} ${movement.receiver.lastName}`;
+    return `Enviado a ${movement.receiver?.firstName || 'Usuario'} ${movement.receiver?.lastName || ''}`;
   }
 };
 
@@ -377,6 +381,10 @@ function getAmountClass(movement: Movement) {
 function formatAmount(movement: Movement) {
   const amount = isIncome(movement) ? movement.amount : -movement.amount;
   return formatCurrency(amount);
+}
+
+function goToHome() {
+  router.push('/HomePage');
 }
 </script>
 
