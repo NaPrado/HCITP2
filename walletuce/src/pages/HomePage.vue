@@ -18,8 +18,24 @@
               <div class="text-h5 font-weight-bold text-grey-lighten-4">
                 Saldo
               </div>
-              <div class="text-h6 font-weight-bold text-grey-lighten-4">
-                {{ formattedBalance }}
+              <div
+                class="text-h6 font-weight-bold text-grey-lighten-4 d-flex align-center"
+              >
+                <template v-if="!balanceHidden">
+                  {{ formattedBalance }}
+                </template>
+                <template v-else> $ **** </template>
+                <v-btn
+                  icon
+                  variant="text"
+                  color="grey-lighten-4"
+                  class="ml-2"
+                  @click="toggleBalance"
+                >
+                  <v-icon>{{
+                    balanceHidden ? "mdi-eye-off" : "mdi-eye"
+                  }}</v-icon>
+                </v-btn>
               </div>
             </div>
           </v-container>
@@ -236,6 +252,7 @@ const mostrarAlias = ref(false);
 const editandoAlias = ref(false);
 const nuevoAlias = ref("");
 const userName = ref("");
+const balanceHidden = ref(false);
 
 function formatBalance(amount: number) {
   return amount.toLocaleString("es-AR", {
@@ -373,6 +390,10 @@ function handleActionClick(action: string) {
 
 function onMovimientosClick() {
   router.push("/movements");
+}
+
+function toggleBalance() {
+  balanceHidden.value = !balanceHidden.value;
 }
 </script>
 
