@@ -72,6 +72,7 @@ import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
 import { UserApi } from "../api/user";
 import { AccountApi } from "../api/account";
+import { Api } from "../api/api";
 
 const router = useRouter();
 
@@ -98,8 +99,16 @@ onMounted(async () => {
   }
 });
 
-function onCerrarClick() {
-  router.push("./LandingPage");
+async function onCerrarClick() {
+  try {
+    await UserApi.logout();
+  } catch (error: unknown) {
+    console.error("Error al cerrar sesión:", error);
+  }
+  Api.token = null;
+  localStorage.removeItem("auth");
+  localStorage.removeItem("token");
+  router.push("/login");
 }
 
 function onTarjetasClick() {
