@@ -58,9 +58,11 @@
             <CardSelector
               v-if="origen === 'tarjeta'"
               v-model="selectedCard"
+              @update:selectedCard="onSelectedCardChange"
               label="Seleccione una tarjeta"
               class="mt-2"
             />
+
             <v-text-field
               v-if="origen === 'cuenta'"
               v-model="cvuCuenta"
@@ -121,6 +123,7 @@ const cvuCuenta = ref("");
 //     // await loadCards(); // Eliminado
 //   }
 // });
+const selectedCardDisplay = ref<string | null>(null);
 
 watch(origen, (newValue) => {
   if (newValue === "tarjeta") {
@@ -134,6 +137,9 @@ watch(origen, (newValue) => {
 // type CardFromApi = { ... }; // Eliminado
 // type CardApiResponse = ...; // Eliminado
 // async function loadCards() { ... } // Eliminada toda la función loadCards
+function onSelectedCardChange(card: { id: string; displayName: string } | null) {
+  selectedCardDisplay.value = card?.displayName || null;
+}
 
 function onCrearClick() {
   const montoNumero = parseFloat(monto.value);
@@ -172,10 +178,11 @@ function onCrearClick() {
       monto: monto.value,
       origen: origen.value,
       cardId: selectedCard.value || undefined,
-      // cardDisplay: ... // Necesitaría lógica adicional si se requiere
+      cardDisplay: selectedCardDisplay.value || undefined,
       cvu: origen.value === "cuenta" ? cvuCuenta.value : undefined,
     },
   });
+
 }
 </script>
 
