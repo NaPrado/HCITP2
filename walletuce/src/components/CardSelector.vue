@@ -40,8 +40,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   "update:modelValue": [value: string | null];
+  "update:selectedCard": [card: { id: string; displayName: string } | null];
 }>();
-
 const router = useRouter();
 const loading = ref(false);
 const error = ref("");
@@ -64,7 +64,10 @@ watch(
 
 watch(selectedCardId, (newValue) => {
   emit("update:modelValue", newValue);
+  const card = formattedCards.value.find((c) => c.id === newValue) || null;
+  emit("update:selectedCard", card);
 });
+
 
 async function loadCards() {
   loading.value = true;

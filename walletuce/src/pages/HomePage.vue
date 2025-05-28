@@ -158,14 +158,22 @@
             <!-- Sección Alias -->
             <div class="dialog-section mt-4">
               <div class="dialog-label">
-                <v-icon size="18" color="green-lighten-1" class="mr-2"
-                  >mdi-at</v-icon
-                >
+                <v-icon size="18" color="green-lighten-1" class="mr-2">mdi-at</v-icon>
                 Alias
               </div>
               <div class="dialog-value-container">
                 <template v-if="!editandoAlias">
                   <span class="dialog-value">{{ alias || "Cargando..." }}</span>
+                  <v-btn
+                    variant="tonal"
+                    color="green-lighten-1"
+                    size="small"
+                    class="ml-2 copy-btn"
+                    @click="copiarAlias"
+                  >
+                    <v-icon size="18" class="mr-1">mdi-content-copy</v-icon>
+                    Copiar
+                  </v-btn>
                   <v-btn
                     variant="tonal"
                     color="green-lighten-1"
@@ -214,6 +222,7 @@
                 </template>
               </div>
             </div>
+
           </v-card-text>
 
           <v-card-actions class="justify-end px-6 pb-6">
@@ -298,8 +307,16 @@ onMounted(async () => {
 function copiarCvu() {
   if (cvu.value) {
     navigator.clipboard.writeText(cvu.value);
+    snackbarStore.showSuccess("CVU copiado al portapapeles");
   }
 }
+function copiarAlias() {
+  if (alias.value) {
+    navigator.clipboard.writeText(alias.value);
+    snackbarStore.showSuccess("Alias copiado al portapapeles");
+  }
+}
+
 
 function empezarEditarAlias() {
   nuevoAlias.value = alias.value;

@@ -162,7 +162,7 @@ const sections = [
       },
       {
         title: "Completá los datos del destinatario",
-        content: "Ingresá alias, CBU o CVU del destinatario.",
+        content: "Ingresá alias, mail o CVU del destinatario.",
         image: null,
       },
       {
@@ -195,7 +195,7 @@ const sections = [
       },
       {
         title: "Completá los datos del cobro",
-        content: "Ingresá el monto y una breve descripción (opcional).",
+        content: "Ingresá el monto y una breve descripción.",
         image: null,
       },
       {

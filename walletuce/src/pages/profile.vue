@@ -5,19 +5,12 @@
       <AppHeader titulo="Mi Perfil" />
 
       <!-- Contenido principal -->
-      <v-container
-        class="d-flex flex-column align-center justify-center main-content pt-4"
-      >
-        <BackButton
-          to="/HomePage"
-          variant="text"
-          class="align-self-start ml-4 mt-4"
-        />
+      <v-container class="d-flex flex-column align-center justify-center main-content pt-4">
+        <BackButton to="/HomePage" variant="text" class="align-self-start ml-4 mt-4" />
+
         <v-card class="pa-6 container-card bg-grey-lighten-2" rounded="lg">
-          <v-card
-            class="pa-4 mb-4 card-with-shadow-medium bg-grey-lighten-3"
-            rounded="lg"
-          >
+          <!-- Información de usuario -->
+          <v-card class="pa-4 mb-4 card-with-shadow-medium bg-grey-lighten-3" rounded="lg">
             <v-card-title class="text-green font-weight-bold pb-1 pt-0">
               <h2>{{ nombre }}</h2>
             </v-card-title>
@@ -25,30 +18,88 @@
               <h5>Mail asociado: {{ mail }}</h5>
             </v-card-title>
             <v-card-text class="pt-2">
-              <div>
-                <b>CVU: </b>
-                <span style="font-family: monospace">{{ cvu }}</span>
+              <!-- Alias -->
+              <div class="mb-4">
+                <div class="d-flex align-center justify-space-between mb-1">
+                  <span class="text-subtitle-1 font-weight-bold">Alias</span>
+                  <template v-if="!editandoAlias">
+                    <v-btn
+                      variant="tonal"
+                      color="green-lighten-1"
+                      size="small"
+                      class="ml-2"
+                      @click="empezarEditarAlias"
+                    >
+                      <v-icon size="18" class="mr-1">mdi-pencil</v-icon>
+                      Editar
+                    </v-btn>
+                  </template>
+                </div>
+
+                <div v-if="!editandoAlias" class="alias-display">
+                  {{ alias || 'Cargando...' }}
+                </div>
+                <div v-else>
+                  <v-text-field
+                    v-model="editableAlias"
+                    variant="outlined"
+                    density="comfortable"
+                    hide-details
+                    placeholder="Ingresa tu nuevo alias"
+                    color="green-lighten-1"
+                    bg-color="white"
+                    class="mb-2"
+                  />
+                  <div class="d-flex">
+                    <v-btn
+                      variant="tonal"
+                      color="green-lighten-1"
+                      size="small"
+                      class="mr-2"
+                      @click="guardarAlias"
+                    >
+                      <v-icon size="18" class="mr-1">mdi-content-save</v-icon>
+                      Guardar
+                    </v-btn>
+                    <v-btn
+                      variant="outlined"
+                      color="grey"
+                      size="small"
+                      @click="cancelarEditarAlias"
+                    >
+                      <v-icon size="18" class="mr-1">mdi-close</v-icon>
+                      Cancelar
+                    </v-btn>
+                  </div>
+                </div>
               </div>
+
+              <!-- CVU -->
               <div>
-                <b>Alias: </b> <span>{{ alias }}</span>
+                <div class="d-flex align-center justify-space-between mb-1">
+                  <span class="text-subtitle-1 font-weight-bold">CVU</span>
+                </div>
+                <div class="alias-display">
+                  {{ cvu || 'Cargando...' }}
+                </div>
               </div>
             </v-card-text>
           </v-card>
+
+          <!-- Tarjetas -->
           <v-card
             class="d-flex align-center justify-space-between px-4 py-3 mb-4 bg-grey-lighten-3 card-with-shadow-light tarjeta-card"
             rounded="lg"
             @click="onTarjetasClick"
           >
-            <v-icon size="36" color="green-darken-2" class="mr-4"
-              >mdi-wallet</v-icon
-            >
+            <v-icon size="36" color="green-darken-2" class="mr-4">mdi-wallet</v-icon>
             <div class="flex-grow-1">
-              <span class="text-black font-weight-medium text-subtitle-1"
-                >Administrar Tarjetas</span
-              >
+              <span class="text-black font-weight-medium text-subtitle-1">Administrar Tarjetas</span>
             </div>
             <v-icon size="24" color="grey-darken-1">mdi-chevron-right</v-icon>
           </v-card>
+
+          <!-- Botón cerrar sesión -->
           <v-row class="mt-4 mb-1 mr-1" justify="end" align="center">
             <v-btn
               color="green-lighten-1"
@@ -72,6 +123,11 @@ import AppHeader from "../components/AppHeader.vue";
 import BackButton from "../components/BackButton.vue";
 import { UserApi } from "../api/user";
 import { AccountApi } from "../api/account";
+import { Api } from "../api/api";
+import { useSnackbarStore } from "../stores/snackbar";
+
+const snackbarStore = useSnackbarStore();
+const editandoAlias = ref(false);
 
 const router = useRouter();
 
@@ -79,27 +135,59 @@ const mail = ref("");
 const nombre = ref("");
 const cvu = ref("");
 const alias = ref("");
+const editableAlias = ref("");
+function empezarEditarAlias() {
+  editableAlias.value = alias.value;
+  editandoAlias.value = true;
+}
+
+function cancelarEditarAlias() {
+  editandoAlias.value = false;
+  editableAlias.value = alias.value;
+}
 
 onMounted(async () => {
   try {
-    // Obtener datos de usuario
     const user = await UserApi.get();
     mail.value = user.email || "";
     nombre.value = user.firstName
       ? user.firstName + (user.lastName ? " " + user.lastName : "")
       : "";
-    // Obtener datos de cuenta
+
     const account = await AccountApi.get();
     cvu.value = account.cvu || "";
     alias.value = account.alias || "";
+    editableAlias.value = alias.value;
   } catch (e) {
     console.error("Error al obtener datos de perfil:", e);
     router.push("/login");
   }
 });
 
-function onCerrarClick() {
-  router.push("./LandingPage");
+async function guardarAlias() {
+  try {
+    const nuevoAlias = editableAlias.value.trim();
+    await AccountApi.updateAlias({ alias: nuevoAlias }); // Asegúrate que exista este método
+    alias.value = nuevoAlias;
+    editandoAlias.value = false;
+    snackbarStore.showSuccess("Alias actualizado correctamente");
+  } catch (e) {
+    console.error("Error al actualizar alias:", e);
+    snackbarStore.showError("Error al actualizar el alias");
+  }
+}
+
+
+async function onCerrarClick() {
+  try {
+    await UserApi.logout();
+  } catch (error: unknown) {
+    console.error("Error al cerrar sesión:", error);
+  }
+  Api.token = null;
+  localStorage.removeItem("auth");
+  localStorage.removeItem("token");
+  router.push("/login");
 }
 
 function onTarjetasClick() {
@@ -115,61 +203,20 @@ function onTarjetasClick() {
   flex-direction: column;
 }
 
-.ayuda-btn {
-  background: #f3eafe !important;
-  border-radius: 10px !important;
-  font-weight: bold;
-  font-size: 1.15rem;
-  padding: 4px 18px 4px 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
-  display: flex;
-  align-items: center;
-  min-height: 40px;
-  height: 40px;
-  transition: background 0.2s;
-  gap: 4px;
+.cvu-box {
+  font-family: monospace;
+  background-color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  word-break: break-all;
 }
-.ayuda-btn:hover {
-  background: #e1d5f6 !important;
-}
-.ayuda-text {
-  font-weight: bold;
-  margin-left: 2px;
-  font-size: 1.1rem;
-}
-.ayuda-btn .v-icon {
-  font-size: 18px !important;
-  margin-right: 2px;
-  margin-left: 0;
-  margin-top: 12px;
-  margin-bottom: 12px;
-  vertical-align: middle;
-}
-.avatar-espaciado {
-  margin-left: 16px;
-}
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 0;
-}
-.custom-app-bar {
-  min-height: 72px !important; /* ajusta según necesidad */
-}
-.custom-app-bar .v-toolbar-title {
-  line-height: 1.2;
-}
-.v-toolbar-title {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-}
+
 .container-card {
   border-radius: 16px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
   width: 100%;
-  max-width: 700px; /* aumentado de 700px */
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
   flex-direction: column;
@@ -181,24 +228,30 @@ function onTarjetasClick() {
 .card-with-shadow-light {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
 }
-.confirmation-text {
-  color: black;
-  font-size: large;
-  margin-left: 24px;
-}
-.back-button {
-  align-self: flex-start;
-  margin-left: 20%;
-  margin-bottom: 10px;
-  font-weight: 600;
-  font-size: 1rem;
-  color: rgba(0, 0, 0, 0.7) !important;
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .tarjeta-card {
   cursor: pointer;
   transition: background-color 0.2s;
 }
 .tarjeta-card:hover {
-  background-color: #e0e0e0; /* efecto hover sutil */
+  background-color: #e0e0e0;
 }
+
+.alias-display {
+  padding: 8px 12px;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  font-family: "Roboto", sans-serif;
+  word-break: break-word;
+}
+
+
 </style>
