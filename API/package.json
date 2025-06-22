@@ -4,7 +4,8 @@
   "description": "HCI Wallet API",
   "main": "src/index.ts",
   "scripts": {
-    "api": "nodemon src/index.ts"
+    "api": "nodemon src/index.ts",
+    "build": "tsc"
   },
   "keywords": [
     "HCI"
